@@ -1,0 +1,275 @@
+
+<div class="container-fluid mt-4">
+  <!-- Page Top Tabs -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'rental'" (click)="setActiveTab('rental')" href="javascript:void(0)">
+        Rental / New
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'repair'" (click)="setActiveTab('repair')" href="javascript:void(0)">
+        Repair / Rework
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'replacement'" (click)="setActiveTab('replacement')" href="javascript:void(0)">
+        Replacement
+      </a>
+    </li>
+  </ul>
+
+  <div class="row">
+    <div class="col-md-6">
+      <!-- Rental/New Form -->
+      <div class="card" *ngIf="activeTab === 'rental'">
+        <div class="card-header">
+          <h5>Add Rental / New Asset</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="assetForm" (ngSubmit)="onSubmitRental()">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Asset Name</label>
+                <select class="form-select" formControlName="assetName">
+                  <option value="">Select Asset</option>
+                  <option value="Laptop">Laptop</option>
+                  <option value="Desktop">Desktop</option>
+                  <option value="Printer">Printer</option>
+                  <option value="Monitor">Monitor</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Model</label>
+                <select class="form-select" formControlName="model">
+                  <option value="">Select Model</option>
+                  <option *ngFor="let model of models" [value]="model">{{model}}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Serial Number</label>
+                <input type="text" class="form-control" formControlName="serialNumber">
+                
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Date</label>
+                <input type="date" class="form-control" formControlName="date">
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Given To (Client)</label>
+                <select class="form-select" formControlName="givenTo">
+                  <option value="">Select Client</option>
+                  <option *ngFor="let client of clients" [value]="client">{{client}}</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Status</label>
+                <select class="form-select" formControlName="status">
+                  <option value="Rental">Rental</option>
+                  <option value="New">New</option>
+                    <option value="New">Sale</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label class="form-label">Specifications</label>
+                 <select class="form-select" formControlName="givenTo">
+                  <option value="">Select Client</option>
+                  <option *ngFor="let specificationss of specifications" [value]="specificationss">{{specificationss}}</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" [disabled]="!assetForm.valid">
+              Add Asset
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Repair/Rework Form -->
+      <div class="card" *ngIf="activeTab === 'repair'">
+        <div class="card-header">
+          <h5>Repair / Rework Entry</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="assetForm" (ngSubmit)="onSubmitRepair()">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Asset Name</label>
+                <select class="form-select" formControlName="assetName">
+                  <option value="">Select Asset</option>
+                  <option value="Laptop">Laptop</option>
+                  <option value="Desktop">Desktop</option>
+                  <option value="Printer">Printer</option>
+                  <option value="Monitor">Monitor</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Model</label>
+                <select class="form-select" formControlName="model">
+                  <option value="">Select Model</option>
+                  <option *ngFor="let model of models" [value]="model">{{model}}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Serial Number</label>
+                <input type="text" class="form-control" formControlName="serialNumber">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Date</label>
+                <input type="date" class="form-control" formControlName="date">
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Returned From (Client)</label>
+                <select class="form-select" formControlName="givenTo">
+                  <option value="">Select Client</option>
+                  <option *ngFor="let client of clients" [value]="client">{{client}}</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Status</label>
+                <input type="text" class="form-control" value="Repair" disabled>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label class="form-label">Issue Description</label>
+                <textarea class="form-control" formControlName="specifications" rows="3"></textarea>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-warning" [disabled]="!assetForm.valid">
+              Submit for Repair
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Replacement Form -->
+      <div *ngIf="activeTab==='replacement'" class="card p-3">
+
+    <h5>Replacement Entry</h5>
+
+    <form [formGroup]="replacementForm" (ngSubmit)="onSubmitReplacement()">
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label>Asset Name</label>
+          <select class="form-control" formControlName="assetName">
+            <option value="">Select</option>
+            <option>Laptop</option>
+            <option>Desktop</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label>Model</label>
+          <select class="form-control" formControlName="model">
+  <option value="">Select Model</option>
+  <option *ngFor="let m of models">{{m}}</option>
+</select>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label>Old Serial</label>
+          <input class="form-control" formControlName="serialNumber">
+        </div>
+
+        <div class="col-md-6">
+          <label>New Serial</label>
+          <input class="form-control" formControlName="replacedSerialNumber">
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label>Date</label>
+          <input type="date" class="form-control" formControlName="date">
+        </div>
+
+        <div class="col-md-6">
+          <label>Client</label>
+         <select class="form-control" formControlName="givenTo">
+  <option value="">Select Client</option>
+  <option *ngFor="let c of clients">{{c}}</option>
+</select>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label>Specifications</label>
+        <textarea class="form-control" formControlName="specifications"></textarea>
+      </div>
+
+     <button 
+  type="submit" 
+  class="btn btn-info" 
+  [disabled]="!replacementForm.valid">
+  Save Replacement
+</button>
+
+    </form>
+
+    <!-- 🔥 Toggle Button -->
+    <div class="mt-3 text-end">
+      <button class="btn toggle-btn"
+              [ngClass]="showTable ? 'btn-danger' : 'btn-success'"
+              (click)="toggleTable()">
+        {{ showTable ? 'Hide Table ▲' : 'Show Table ▼' }}
+      </button>
+    </div>
+
+    <!-- 🔥 TABLE -->
+    <div *ngIf="showTable" class="table-box mt-3">
+
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Serial</th>
+            <th>Replaced</th>
+            <th>Model</th>
+            <th>Client</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let r of replacements">
+            <td>{{r.serialNumber}}</td>
+            <td>{{r.replacedSerialNumber}}</td>
+            <td>{{r.model}}</td>
+            <td>{{r.details}}</td>
+            <td>{{r.date | date}}</td>
+            <td>{{r.status}}</td>
+          </tr>
+        </tbody>
+
+      </table>
+
+    </div>
+
+    </div>
+
+    <!-- Serial Number Tracking -->
+    
+  </div>
+</div>

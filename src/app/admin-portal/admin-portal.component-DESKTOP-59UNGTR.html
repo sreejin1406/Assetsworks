@@ -1,0 +1,252 @@
+<!-- admin-portal.component.html -->
+<div class="admin-portal">
+  <!-- Header -->
+  <div class="admin-header">
+    <div class="header-title">
+      <i class="bi bi-speedometer2"></i>
+      <h2>Admin Dashboard</h2>
+      <span class="live-badge">Live Analytics</span>
+    </div>
+    <button class="btn-refresh" (click)="loadAllTickets()">
+      <i class="bi bi-arrow-repeat"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid-admin">
+    <div class="stat-card-admin">
+      <div class="stat-icon blue"><i class="bi bi-inbox"></i></div>
+      <div class="stat-number">{{ stats.total }}</div>
+      <div class="stat-label">Total Tickets</div>
+    </div>
+    <div class="stat-card-admin">
+      <div class="stat-icon red"><i class="bi bi-exclamation-circle"></i></div>
+      <div class="stat-number">{{ stats.open }}</div>
+      <div class="stat-label">Open</div>
+    </div>
+    <div class="stat-card-admin">
+      <div class="stat-icon orange"><i class="bi bi-arrow-repeat"></i></div>
+      <div class="stat-number">{{ stats.inProgress }}</div>
+      <div class="stat-label">In Progress</div>
+    </div>
+    <div class="stat-card-admin">
+      <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+      <div class="stat-number">{{ stats.closed }}</div>
+      <div class="stat-label">Closed</div>
+    </div>
+    <div class="stat-card-admin">
+      <div class="stat-icon purple"><i class="bi bi-flag"></i></div>
+      <div class="stat-number">{{ stats.highPriority }}</div>
+      <div class="stat-label">High Priority</div>
+    </div>
+    <div class="stat-card-admin">
+      <div class="stat-icon teal"><i class="bi bi-clock-history"></i></div>
+      <div class="stat-number">{{ stats.avgResolution }}h</div>
+      <div class="stat-label">Avg Resolution</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4 mt-2">
+    <div class="col-md-5">
+      <div class="admin-card">
+        <div class="card-title">
+          <i class="bi bi-pie-chart"></i>
+          <h5>Ticket Distribution</h5>
+        </div>
+        <canvas id="statusChart" style="max-height: 250px;"></canvas>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <div class="admin-card">
+        <div class="card-title">
+          <i class="bi bi-people"></i>
+          <h5>Quick Actions</h5>
+        </div>
+        <div class="quick-actions">
+          <button class="action-btn" (click)="loadAllTickets()">
+            <i class="bi bi-arrow-repeat"></i> Refresh Data
+          </button>
+          <button class="action-btn" (click)="clearFilters()">
+            <i class="bi bi-eraser"></i> Clear Filters
+          </button>
+        </div>
+        <div class="stats-summary mt-3">
+          <div class="summary-item">
+            <span>This Week:</span>
+            <strong>{{ stats.thisWeek }} new tickets</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-admin">
+    <div class="row g-3">
+      <div class="col-md-2">
+        <select class="form-select" #statusFilter (change)="filters.status = statusFilter.value; applyFilters()">
+          <option value="">All Status</option>
+          <option value="Open">Open</option>
+          <option value="InProgress">In Progress</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" #priorityFilter (change)="filters.priority = priorityFilter.value; applyFilters()">
+          <option value="">All Priority</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" #assignedFilter (change)="filters.assignedTo = assignedFilter.value; applyFilters()">
+          <option value="">All Assignees</option>
+<option *ngFor="let user of users" [value]="user.userId">
+  {{ user.username }}
+</option>        </select>
+      </div>
+      <div class="col-md-4">
+        <input type="text" class="form-control" #searchInput 
+               placeholder="Search tickets..." 
+               (keyup.enter)="filters.search = searchInput.value; applyFilters()">
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tickets Table -->
+  <div class="table-wrapper">
+    <div class="table-responsive">
+      <table class="table admin-table">
+        <thead>
+          <tr>
+            <th>Ticket #</th>
+            <th>Device/Issue</th>
+            <th>Raised By</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Assigned To</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ticket of filteredTickets">
+            <td>
+              <strong>{{ ticket.ticketNumber }}</strong>
+              <div class="small text-muted">ID: {{ ticket.ticketId }}</div>
+            </td>
+            <td>
+              {{ ticket.model }}
+              <div class="small text-muted">{{ ticket.issueType }}</div>
+            </td>
+            <td>{{ ticket.raisedByName || ticket.raisedBy }}</td>
+            <td><span [class]="getPriorityClass(ticket.priority)">{{ ticket.priority }}</span></td>
+            <td>
+              <select class="form-select form-select-sm status-select" 
+                      (change)="updateStatus(ticket.ticketId!, $event)"
+                      [value]="ticket.status">
+                <option value="Open">Open</option>
+                <option value="InProgress">In Progress</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </td>
+            <td>{{ ticket.assignedToName || 'Unassigned' }}</td>
+            <td>{{ formatDate(ticket.createdDate) }}</td>
+            <td>
+              <button class="btn-icon" (click)="viewTicket(ticket)" title="View Details">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn-icon" (click)="openAssignModal(ticket.ticketId!)" title="Assign">
+                <i class="bi bi-person-plus"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredTickets.length === 0">
+            <td colspan="8" class="text-center py-5">
+              <i class="bi bi-inbox fs-1 text-muted"></i>
+              <p class="mt-2">No tickets found</p>
+            </td>
+          </tr>
+        </tbody>
+       </table>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Modal -->
+<div class="modal fade" [class.show]="showAssignModal" [style.display]="showAssignModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Assign Ticket</h5>
+        <button type="button" class="btn-close" (click)="showAssignModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label">Select Technician</label>
+        <select class="form-select" [(ngModel)]="selectedUserId">
+          <option [value]="0">-- Select User --</option>
+          <option *ngFor="let user of users" [value]="user.userId">{{ user.username }} ({{ user.role }})</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showAssignModal = false">Cancel</button>
+        <button class="btn btn-primary" (click)="assignTicket()">Assign</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Ticket Modal -->
+<div class="modal fade" [class.show]="showTicketModal" [style.display]="showTicketModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" *ngIf="selectedTicket">
+      <div class="modal-header">
+        <h5 class="modal-title">Ticket Details - {{ selectedTicket.ticketNumber }}</h5>
+        <button type="button" class="btn-close" (click)="showTicketModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <strong>Device:</strong> {{ selectedTicket.model }}
+          </div>
+          <div class="col-md-6">
+            <strong>Serial:</strong> {{ selectedTicket.serialNumber }}
+          </div>
+          <div class="col-12 mt-2">
+            <strong>Issue:</strong> {{ selectedTicket.issueDescription }}
+          </div>
+          <div class="col-md-4 mt-2">
+            <strong>Priority:</strong> <span [class]="getPriorityClass(selectedTicket.priority)">{{ selectedTicket.priority }}</span>
+          </div>
+          <div class="col-md-4 mt-2">
+            <strong>Status:</strong> <span [class]="getStatusClass(selectedTicket.status!)">{{ selectedTicket.status }}</span>
+          </div>
+          <div class="col-md-4 mt-2">
+            <strong>Assigned To:</strong> {{ selectedTicket.assignedToName || 'Unassigned' }}
+          </div>
+        </div>
+        <hr>
+        <h6>Comments</h6>
+        <div class="comments-list">
+          <div *ngFor="let comment of selectedTicket.ticketComments" class="comment">
+            <strong>{{ comment.commentedByName }}</strong>
+            <small class="text-muted">{{ formatDate(comment.createdDate) }}</small>
+            <p>{{ comment.comment }}</p>
+          </div>
+        </div>
+        <textarea class="form-control mt-3" rows="2" [(ngModel)]="newComment" placeholder="Add a comment..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showTicketModal = false">Close</button>
+        <button class="btn btn-primary" (click)="addComment()">Post Comment</button>
+      </div>
+    </div>
+  </div>
+</div>

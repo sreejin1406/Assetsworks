@@ -1,0 +1,171 @@
+<div class="dashboard-shell">
+
+  <!-- ambient animated background: drifting orbs + VR grid horizon + scan line -->
+  <div class="bg-aurora" aria-hidden="true">
+    <span class="orb orb-cyan"></span>
+    <span class="orb orb-violet"></span>
+    <span class="orb orb-emerald"></span>
+    <div class="grid-overlay"></div>
+    <div class="scan-line"></div>
+  </div>
+
+  <!-- ===================== NAV ===================== -->
+ 
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="main-content">
+
+    <!-- filters -->
+    <section class="filter-bar glass tilt-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+      <div class="filter-group">
+        <label>Client</label>
+        <select [(ngModel)]="selectedClient" (ngModelChange)="applyFilters()">
+          <option value="">All Clients</option>
+          <option *ngFor="let c of clients" [value]="c">{{ c }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Model</label>
+        <select [(ngModel)]="selectedModel" (ngModelChange)="applyFilters()">
+          <option value="">All Models</option>
+          <option *ngFor="let m of models" [value]="m">{{ m }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Status</label>
+        <select [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()">
+          <option value="">All Status</option>
+          <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group search-group">
+        <label>Search</label>
+        <div class="search-input">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input type="text" placeholder="Asset, serial, client, location…" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)" />
+        </div>
+      </div>
+
+      <div class="filter-group date-group">
+        <label>From</label>
+        <input type="date" [(ngModel)]="fromDate" (ngModelChange)="applyFilters()" />
+        <label>To</label>
+        <input type="date" [(ngModel)]="toDate" (ngModelChange)="applyFilters()" />
+      </div>
+
+      <button class="btn-ghost" (click)="clearFilters()">Clear</button>
+
+      <div class="export-group">
+        <button class="export-btn excel" (click)="exportToExcel()" title="Export Excel">XLS</button>
+        <button class="export-btn word" (click)="exportToWord()" title="Export Word">DOC</button>
+        <button class="export-btn pdf" (click)="exportToPDF()" title="Export PDF">PDF</button>
+      </div>
+    </section>
+
+    <!-- status summary -->
+    <section class="status-row">
+      <div class="status-card hud-card tilt-card rent" [class.active]="selectedStatus === 'Rent'"
+           (click)="filterByStatus('Rent')" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <div class="status-pulse pulse-rent"></div>
+        <div class="status-icon">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 6V4h8v2" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <div class="status-info">
+          <span class="status-label">Rent</span>
+          <span class="status-count">{{ statusCounts.rent }}</span>
+        </div>
+      </div>
+
+      <div class="status-card hud-card tilt-card repair" [class.active]="selectedStatus === 'Repair'"
+           (click)="filterByStatus('Repair')" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <div class="status-pulse pulse-repair"></div>
+        <div class="status-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a3 3 0 0 0-4.2 4.2L3 18v3h3l7.5-7.5a3 3 0 0 0 4.2-4.2l-2.3 2.3-2-2 2.3-2.3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="status-info">
+          <span class="status-label">Repair</span>
+          <span class="status-count">{{ statusCounts.repair }}</span>
+        </div>
+      </div>
+
+      <div class="status-card hud-card tilt-card sale" [class.active]="selectedStatus === 'Sale'"
+           (click)="filterByStatus('Sale')" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <div class="status-pulse pulse-sale"></div>
+        <div class="status-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 12l8-8 9 9-8 8-9-9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor"/></svg>
+        </div>
+        <div class="status-info">
+          <span class="status-label">Sale</span>
+          <span class="status-count">{{ statusCounts.sale }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- table -->
+    <section class="table-section glass floating">
+      <div class="table-header">
+        <h2>Asset Records</h2>
+        <span class="record-pill">Total Records: {{ filteredAssets.length }}</span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="asset-table">
+          <thead>
+            <tr>
+              <th>Asset ID</th>
+              <th>Model</th>
+              <th>Serial Number</th>
+              <th>Client Details</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Specification</th>
+              <th>Dispatched Details</th>
+              <th>Receiver Details</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="hud-row" *ngFor="let asset of pagedAssets; trackBy: trackByAssetId">
+              <td><span class="mono accent-left">{{ asset.assetId }}</span></td>
+              <td>{{ asset.model }}</td>
+              <td><span class="mono">{{ asset.serialNumber }}</span></td>
+              <td>{{ asset.clientsDetails }}</td>
+              <td><span class="status-badge" [ngClass]="statusClass(asset.status)">{{ asset.status }}</span></td>
+              <td>{{ asset.date ? (asset.date | date:'dd MMM yyyy') : '—' }}</td>
+              <td class="truncate" [title]="asset.specification">{{ asset.specification }}</td>
+              <td>{{ asset.dispatchedDetails }}</td>
+              <td>{{ asset.receiverDetails }}</td>
+              <td>{{ asset.location }}</td>
+            </tr>
+
+            <tr *ngIf="!loading && filteredAssets.length === 0">
+              <td colspan="10" class="empty-state">
+                <ng-container *ngIf="!errorMessage">No assets match the current filters.</ng-container>
+                <ng-container *ngIf="errorMessage">{{ errorMessage }}</ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="loading-overlay" *ngIf="loading">
+          <div class="loader-ring"></div>
+          <span>Syncing asset data…</span>
+        </div>
+      </div>
+
+      <div class="table-footer">
+        <span class="total-records">Total Records: <strong>{{ filteredAssets.length }}</strong></span>
+
+        <div class="pagination" *ngIf="totalPages > 1">
+          <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+          <span>Page {{ currentPage }} / {{ totalPages }}</span>
+          <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>

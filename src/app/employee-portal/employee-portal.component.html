@@ -1,0 +1,412 @@
+<div class="client-portal">
+
+  <!-- Header -->
+  <div class="portal-header animate-fade-in">
+
+    <div class="header-content">
+
+      <div class="title-section">
+
+        <i class="bi bi-person-workspace"></i>
+
+        <h1>Employee Service Portal</h1>
+
+        <p class="subtitle">
+          Manage assigned tickets and support requests
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Stats -->
+
+  <div class="stats-grid">
+
+    <div class="stat-card">
+
+      <div class="stat-icon bg-primary-soft">
+        <i class="bi bi-ticket-perforated"></i>
+      </div>
+
+      <div class="stat-info">
+        <h3>{{stats.total}}</h3>
+        <p>Assigned Tickets</p>
+      </div>
+
+    </div>
+
+    <div class="stat-card">
+
+      <div class="stat-icon bg-danger-soft">
+        <i class="bi bi-exclamation-circle"></i>
+      </div>
+
+      <div class="stat-info">
+        <h3>{{stats.open}}</h3>
+        <p>Open</p>
+      </div>
+
+    </div>
+
+    <div class="stat-card">
+
+      <div class="stat-icon bg-warning-soft">
+        <i class="bi bi-arrow-repeat"></i>
+      </div>
+
+      <div class="stat-info">
+        <h3>{{stats.inProgress}}</h3>
+        <p>In Progress</p>
+      </div>
+
+    </div>
+
+    <div class="stat-card">
+
+      <div class="stat-icon bg-success-soft">
+        <i class="bi bi-check-circle"></i>
+      </div>
+
+      <div class="stat-info">
+        <h3>{{stats.closed}}</h3>
+        <p>Closed</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Recent Activity -->
+
+  <div class="card-modern mt-4">
+
+    <div class="card-header-custom">
+
+      <i class="bi bi-clock-history"></i>
+
+      <h5>Recent Assigned Tickets</h5>
+
+    </div>
+
+    <div class="activity-timeline">
+
+      <div
+      *ngFor="let ticket of tickets | slice:0:5"
+      class="activity-item">
+
+        <div class="activity-content">
+
+          <strong>
+            {{ticket.ticketNumber}}
+          </strong>
+
+          - {{ticket.issueType}}
+
+          <div class="small text-muted">
+
+            {{formatDate(ticket.createdDate)}}
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Table -->
+
+  <div class="tickets-table-wrapper mt-4">
+
+    <div class="table-responsive">
+
+      <table class="table modern-table">
+
+        <thead>
+
+        <tr>
+
+          <th>Ticket #</th>
+
+          <th>Device</th>
+
+          <th>Raised By</th>
+
+          <th>Priority</th>
+
+          <th>Status</th>
+
+          <th>Created</th>
+
+          <th>Action</th>
+
+        </tr>
+
+        </thead>
+
+        <tbody>
+
+        <tr *ngFor="let ticket of tickets">
+
+          <td>
+
+            <strong>
+
+              {{ticket.ticketNumber}}
+
+            </strong>
+
+          </td>
+
+          <td>
+
+            {{ticket.model}}
+
+            <div class="small text-muted">
+
+              {{ticket.serialNumber}}
+
+            </div>
+
+          </td>
+
+          <td>
+
+            {{ticket.raisedByName}}
+
+          </td>
+
+          <td>
+
+            <span
+            [class]="getPriorityClass(ticket.priority)">
+
+              {{ticket.priority}}
+
+            </span>
+
+          </td>
+
+          <td>
+
+            <span
+            [class]="getStatusClass(ticket.status)">
+
+              {{ticket.status}}
+
+            </span>
+
+          </td>
+
+          <td>
+
+            {{formatDate(ticket.createdDate)}}
+
+          </td>
+
+          <td>
+
+            <button
+            class="btn-view"
+
+            (click)="viewTicket(ticket)">
+
+              <i class="bi bi-eye"></i>
+
+              View
+
+            </button>
+
+          </td>
+
+        </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- View Ticket Modal -->
+
+<div
+class="modal fade"
+
+[class.show]="showTicketModal"
+
+[style.display]="showTicketModal ? 'block':'none'">
+
+<div class="modal-dialog modal-lg">
+
+<div class="modal-content"
+
+*ngIf="selectedTicket">
+
+<div class="modal-header">
+
+<h5>
+
+{{selectedTicket.ticketNumber}}
+
+</h5>
+
+<button
+class="btn-close"
+
+(click)="showTicketModal=false">
+
+</button>
+
+</div>
+
+<div class="modal-body">
+
+<div class="row">
+
+<div class="col-md-6">
+
+<strong>Device:</strong>
+
+{{selectedTicket.model}}
+
+</div>
+
+<div class="col-md-6">
+
+<strong>Serial:</strong>
+
+{{selectedTicket.serialNumber}}
+
+</div>
+
+<div class="col-md-12 mt-3">
+
+<strong>Description:</strong>
+
+{{selectedTicket.issueDescription}}
+
+</div>
+
+<div class="col-md-6 mt-3">
+
+<strong>Raised By:</strong>
+
+{{selectedTicket.raisedByName}}
+
+</div>
+
+<div class="col-md-6 mt-3">
+
+<strong>Priority:</strong>
+
+<span
+[class]="getPriorityClass(selectedTicket.priority)">
+
+{{selectedTicket.priority}}
+
+</span>
+
+</div>
+
+</div>
+
+<hr>
+
+<h6>Status Update</h6>
+
+<select
+class="form-select"
+
+(change)="updateStatus(selectedTicket.ticketId,$event)"
+
+[value]="selectedTicket.status">
+
+<option value="Open">
+Open
+</option>
+
+<option value="InProgress">
+In Progress
+</option>
+
+<option value="Closed">
+Closed
+</option>
+
+</select>
+
+<hr>
+
+<hr>
+
+<h5>
+  Internal Discussion
+</h5>
+
+<div class="discussion-box">
+
+  <div
+  *ngFor="let comment of selectedTicket.ticketComments"
+  class="comment-card">
+
+    <div class="comment-header">
+
+      <strong>
+
+        {{comment.commentedByName}}
+
+      </strong>
+
+      <small>
+
+        {{formatDate(comment.createdDate)}}
+
+      </small>
+
+    </div>
+
+    <div class="comment-body">
+
+      {{comment.comment}}
+
+    </div>
+
+  </div>
+
+</div>
+
+<textarea
+class="form-control mt-3"
+rows="3"
+name="newComment"
+[(ngModel)]="newComment"
+placeholder="Type message to Admin...">
+
+</textarea>
+
+<button
+class="btn btn-primary mt-2"
+(click)="addComment()">
+
+<i class="bi bi-send"></i>
+
+Send Message
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
