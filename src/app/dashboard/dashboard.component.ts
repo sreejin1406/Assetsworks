@@ -4,6 +4,8 @@ import { Subject, Subscription, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AssetdetailsService } from '../assetdetails.service';
 
+import * as FileSaver from 'file-saver';
+
 // 'xlsx' and 'jspdf' / 'jspdf-autotable' are not bundled with Angular by default.
 // Install them once: npm install xlsx jspdf jspdf-autotable --save
 import * as XLSX from 'xlsx';
@@ -28,7 +30,7 @@ export interface Asset {
 interface StatusCounts {
   rent: number;
   repair: number;
-  sale: number;
+  sold: number;
 }
 
 @Component({
@@ -56,7 +58,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
 
   // ---------- status summary ----------
-  statusCounts: StatusCounts = { rent: 0, repair: 0, sale: 0 };
+  statusCounts: StatusCounts = { rent: 0, repair: 0, sold: 0 };
 
   // ---------- pagination ----------
   currentPage = 1;
@@ -209,12 +211,12 @@ this.assets = (data || []).map((raw: any) => this.mapAsset(raw));          this.
   }
 
   private recomputeStatusCounts(): void {
-    const counts: StatusCounts = { rent: 0, repair: 0, sale: 0 };
+    const counts: StatusCounts = { rent: 0, repair: 0, sold: 0 };
     for (const asset of this.filteredAssets) {
       const status = (asset.status || '').toLowerCase();
       if (status === 'rent') { counts.rent++; }
       else if (status === 'repair') { counts.repair++; }
-      else if (status === 'sale') { counts.sale++; }
+      else if (status === 'sold') { counts.sold++; }
     }
     this.statusCounts = counts;
   }
@@ -315,13 +317,46 @@ this.assets = (data || []).map((raw: any) => this.mapAsset(raw));          this.
 
   // ---------- export ----------
 
-  exportToExcel(): void {
-    const rows = this.filteredAssets.map(a => this.toExportRow(a));
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Assets');
-    XLSX.writeFile(workbook, `Assets_${this.timestamp()}.xlsx`);
+ exportToExcel(): void {
+
+  const rows = this.filteredAssets.map(a => this.toExportRow(a));
+
+  if (!rows.length) {
+    return;
   }
+
+  const worksheet: XLSX.WorkSheet =
+    XLSX.utils.json_to_sheet(rows);
+
+  const workbook: XLSX.WorkBook = {
+    Sheets: { Assets: worksheet },
+    SheetNames: ['Assets']
+  };
+
+  const excelBuffer: any = XLSX.write(
+    workbook,
+    {
+      bookType: 'xlsx',
+      type: 'array'
+    }
+  );
+
+  let fileName = 'Assets_Report';
+
+  if (this.selectedModel) {
+    fileName = `${this.selectedModel}_report`;
+  }
+
+  const data: Blob = new Blob(
+    [excelBuffer],
+    {
+      type:
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
+    }
+  );
+
+  FileSaver.saveAs(data, `${fileName}.xlsx`);
+}
 
   exportToPDF(): void {
     const doc = new jsPDF({ orientation: 'landscape' });

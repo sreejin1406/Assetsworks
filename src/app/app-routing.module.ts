@@ -7,6 +7,7 @@ import { AuthGuard } from './auth.guard';
 import { ClientPortalComponent } from './client-portal/client-portal.component';
 import { AdminPortalComponent } from './admin-portal/admin-portal.component';
 import { EmployeePortalComponent } from './employee-portal/employee-portal.component';
+import { CreateUserComponent } from './create-user/create-user.component';
 
 const routes: Routes = [
   {
@@ -30,6 +31,12 @@ const routes: Routes = [
   {
     path: 'assets',
     component: AssetscreenComponent,
+    canActivate: [AuthGuard],
+    data: { roles: ['Admin', 'Software Developer'] }
+  },
+    {
+    path: 'create-user',
+    component: CreateUserComponent,
     canActivate: [AuthGuard],
     data: { roles: ['Admin', 'Software Developer'] }
   },

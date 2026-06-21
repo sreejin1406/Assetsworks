@@ -1,412 +1,242 @@
-<div class="client-portal">
+<div class="employee-shell">
 
-  <!-- Header -->
-  <div class="portal-header animate-fade-in">
-
-    <div class="header-content">
-
-      <div class="title-section">
-
-        <i class="bi bi-person-workspace"></i>
-
-        <h1>Employee Service Portal</h1>
-
-        <p class="subtitle">
-          Manage assigned tickets and support requests
-        </p>
-
-      </div>
-
-    </div>
-
+  <!-- ambient console background -->
+  <div class="bg-ambient" aria-hidden="true">
+    <span class="glow glow-teal"></span>
+    <span class="glow glow-amber"></span>
+    <div class="grid-overlay"></div>
+    <div class="scan-line"></div>
   </div>
 
-  <!-- Stats -->
+  <main class="employee-content">
 
-  <div class="stats-grid">
-
-    <div class="stat-card">
-
-      <div class="stat-icon bg-primary-soft">
-        <i class="bi bi-ticket-perforated"></i>
+    <!-- ===================== HEADING ===================== -->
+    <header class="page-heading">
+      <div class="heading-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+        <span class="icon-ring"></span>
       </div>
-
-      <div class="stat-info">
-        <h3>{{stats.total}}</h3>
-        <p>Assigned Tickets</p>
+      <div>
+        <span class="heading-eyebrow">Technician Console</span>
+        <h1 class="heading-title">Employee Portal</h1>
       </div>
-
-    </div>
-
-    <div class="stat-card">
-
-      <div class="stat-icon bg-danger-soft">
-        <i class="bi bi-exclamation-circle"></i>
+      <div class="live-indicator">
+        <span class="live-dot"></span> LIVE
       </div>
+    </header>
 
-      <div class="stat-info">
-        <h3>{{stats.open}}</h3>
-        <p>Open</p>
+    <!-- ===================== STATS (animated count-up) ===================== -->
+    <section class="stats-row">
+      <div class="stat-card physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">Assigned Tickets</span>
+        <span class="stat-value">{{ animTotal }}</span>
       </div>
-
-    </div>
-
-    <div class="stat-card">
-
-      <div class="stat-icon bg-warning-soft">
-        <i class="bi bi-arrow-repeat"></i>
+      <div class="stat-card physical-card accent-teal" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">Open</span>
+        <span class="stat-value">{{ animOpen }}</span>
       </div>
-
-      <div class="stat-info">
-        <h3>{{stats.inProgress}}</h3>
-        <p>In Progress</p>
+      <div class="stat-card physical-card accent-amber" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">In Progress</span>
+        <span class="stat-value">{{ animInProgress }}</span>
       </div>
-
-    </div>
-
-    <div class="stat-card">
-
-      <div class="stat-icon bg-success-soft">
-        <i class="bi bi-check-circle"></i>
+      <div class="stat-card physical-card accent-muted" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">Closed</span>
+        <span class="stat-value">{{ animClosed }}</span>
       </div>
+    </section>
 
-      <div class="stat-info">
-        <h3>{{stats.closed}}</h3>
-        <p>Closed</p>
-      </div>
+    <!-- ===================== CHART + QUICK ACTIONS ===================== -->
+    <section class="insight-row">
 
-    </div>
+      <div class="panel chart-panel">
+        <h3>Tickets Distribution</h3>
 
-  </div>
-
-  <!-- Recent Activity -->
-
-  <div class="card-modern mt-4">
-
-    <div class="card-header-custom">
-
-      <i class="bi bi-clock-history"></i>
-
-      <h5>Recent Assigned Tickets</h5>
-
-    </div>
-
-    <div class="activity-timeline">
-
-      <div
-      *ngFor="let ticket of tickets | slice:0:5"
-      class="activity-item">
-
-        <div class="activity-content">
-
-          <strong>
-            {{ticket.ticketNumber}}
-          </strong>
-
-          - {{ticket.issueType}}
-
-          <div class="small text-muted">
-
-            {{formatDate(ticket.createdDate)}}
-
+        <div class="donut-wrap" *ngIf="statTotal > 0; else noData">
+          <svg viewBox="0 0 100 100" class="donut">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#1F2533" stroke-width="10"/>
+            <circle *ngFor="let seg of distribution" cx="50" cy="50" r="42" fill="none"
+                    [attr.stroke]="seg.color" stroke-width="10"
+                    [attr.stroke-dasharray]="seg.dashArray"
+                    [attr.stroke-dashoffset]="seg.dashOffset"
+                    stroke-linecap="round" transform="rotate(-90 50 50)" class="donut-seg"/>
+          </svg>
+          <div class="donut-center">
+            <span class="donut-total">{{ statTotal }}</span>
+            <span class="donut-caption">Total</span>
           </div>
-
         </div>
+        <ng-template #noData><div class="empty-note">No assigned tickets yet.</div></ng-template>
 
+        <div class="legend">
+          <div class="legend-item" *ngFor="let seg of distribution">
+            <span class="dot" [style.background]="seg.color"></span>
+            {{ seg.label }} <strong>{{ seg.count }}</strong>
+          </div>
+        </div>
       </div>
 
+      <div class="panel actions-panel">
+        <h3>Quick Action</h3>
+        <div class="action-grid">
+          <button class="action-tile physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)" (click)="quickFilterOpen()">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>Open Queue</span>
+          </button>
+          <button class="action-tile physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)" (click)="quickFilterInProgress()">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 14a8 8 0 0 0 14.3 3.5M19 10A8 8 0 0 0 4.7 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>In Progress</span>
+          </button>
+          <button class="action-tile physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)" (click)="quickFilterClosed()">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Closed History</span>
+          </button>
+          <button class="action-tile physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)" (click)="quickRefresh()">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 14a8 8 0 0 0 14.3 3.5M19 10A8 8 0 0 0 4.7 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>Refresh Data</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== RECENT ASSIGNED TICKETS (carousel) ===================== -->
+    <section class="recent-section">
+      <h3>Recent Assigned Tickets</h3>
+      <div class="recent-rail" *ngIf="recentAssigned.length > 0; else noRecent">
+        <div class="recent-card hud-card tilt-card" *ngFor="let t of recentAssigned"
+             (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)" (click)="openTicket(t)">
+          <div class="recent-top">
+            <span class="mono">{{ t.code }}</span>
+            <span class="badge" [ngClass]="priorityClass(t.priority)">{{ t.priority }}</span>
+          </div>
+          <span class="recent-device truncate">{{ t.device }}</span>
+          <span class="recent-issue truncate">{{ t.issue }}</span>
+          <div class="recent-bottom">
+            <span class="badge" [ngClass]="statusClass(t.status)">{{ t.status }}</span>
+            <span class="recent-time">{{ timeAgo(t.createdDate) }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #noRecent><div class="empty-note panel">Nothing assigned to you yet.</div></ng-template>
+    </section>
+
+    <!-- ===================== FILTERS ===================== -->
+    <section class="filter-bar panel">
+      <div class="field">
+        <label>Status</label>
+        <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+          <option value="">All Status</option>
+          <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Priority</label>
+        <select [(ngModel)]="priorityFilter" (ngModelChange)="applyFilters()">
+          <option value="">All Priority</option>
+          <option *ngFor="let p of priorityOptions" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+      <div class="field search-field">
+        <label>Search Ticket ID</label>
+        <input type="text" placeholder="e.g. TCK-1042" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
+      </div>
+      <button class="btn-ghost" (click)="clearFilters()">Clear</button>
+    </section>
+
+    <!-- ===================== TABLE ===================== -->
+    <section class="panel table-panel" id="ticket-table-section">
+      <div class="table-scroll">
+        <table class="ticket-table">
+          <thead>
+            <tr>
+              <th>Tickets</th><th>Device</th><th>Raised By</th><th>Priority</th>
+              <th>Status</th><th>Created</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of pagedTickets; trackBy: trackByTicketId">
+              <td><span class="mono accent-left">{{ t.code }}</span></td>
+              <td>{{ t.device }}</td>
+              <td>{{ t.raisedBy }}</td>
+              <td><span class="badge" [ngClass]="priorityClass(t.priority)">{{ t.priority }}</span></td>
+              <td>
+                <select class="status-select" [ngClass]="statusClass(t.status)" [value]="t.status" (change)="onStatusChange(t, $event)">
+                  <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+                </select>
+              </td>
+              <td>{{ t.createdDate ? (t.createdDate | date:'dd MMM yyyy') : '—' }}</td>
+              <td>
+                <button class="btn-eye" (click)="openTicket(t)" aria-label="View ticket">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!loading && filteredTickets.length === 0">
+              <td colspan="7" class="empty-state">
+                <ng-container *ngIf="!errorMessage">No tickets match the current filters.</ng-container>
+                <ng-container *ngIf="errorMessage">{{ errorMessage }}</ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="loading-overlay" *ngIf="loading">
+          <div class="loader-ring"></div><span>Loading tickets…</span>
+        </div>
+      </div>
+
+      <div class="table-footer">
+        <span>Total: <strong>{{ filteredTickets.length }}</strong></span>
+        <div class="pagination" *ngIf="totalPages > 1">
+          <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+          <span>Page {{ currentPage }} / {{ totalPages }}</span>
+          <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================== DETAIL DRAWER ===================== -->
+  <div class="drawer-backdrop" *ngIf="isDrawerOpen" (click)="closeDrawer()"></div>
+  <aside class="drawer" [class.open]="isDrawerOpen" *ngIf="selectedTicket as t">
+    <div class="drawer-header">
+      <div>
+        <span class="mono drawer-id">{{ t.code }}</span>
+        <span class="badge" [ngClass]="statusClass(t.status)">{{ t.status }}</span>
+      </div>
+      <button class="btn-close" (click)="closeDrawer()">✕</button>
     </div>
 
-  </div>
+    <div class="drawer-body">
+      <div class="drawer-row"><label>Device</label><span>{{ t.device }}</span></div>
+      <div class="drawer-row"><label>Issue</label><span>{{ t.issue }}</span></div>
+      <div class="drawer-row"><label>Description</label><span>{{ t.description || '—' }}</span></div>
+      <div class="drawer-row"><label>Priority</label><span class="badge" [ngClass]="priorityClass(t.priority)">{{ t.priority }}</span></div>
+      <div class="drawer-row"><label>Raised By</label><span>{{ t.raisedBy }}</span></div>
+      <div class="drawer-row"><label>Created</label><span>{{ t.createdDate ? (t.createdDate | date:'dd MMM yyyy, h:mm a') : '—' }}</span></div>
 
-  <!-- Table -->
+      <div class="thread-section">
+        <h4>Notes to Admin</h4>
 
-  <div class="tickets-table-wrapper mt-4">
+        <div class="thread-list" *ngIf="comments.length > 0; else noThread">
+          <div class="thread-item" *ngFor="let c of comments">
+            <div class="thread-meta"><strong>{{ c.author }}</strong><span class="mono">{{ c.time | date:'h:mm a' }}</span></div>
+            <p>{{ c.text }}</p>
+          </div>
+        </div>
+        <ng-template #noThread><div class="empty-note">No notes sent yet.</div></ng-template>
 
-    <div class="table-responsive">
-
-      <table class="table modern-table">
-
-        <thead>
-
-        <tr>
-
-          <th>Ticket #</th>
-
-          <th>Device</th>
-
-          <th>Raised By</th>
-
-          <th>Priority</th>
-
-          <th>Status</th>
-
-          <th>Created</th>
-
-          <th>Action</th>
-
-        </tr>
-
-        </thead>
-
-        <tbody>
-
-        <tr *ngFor="let ticket of tickets">
-
-          <td>
-
-            <strong>
-
-              {{ticket.ticketNumber}}
-
-            </strong>
-
-          </td>
-
-          <td>
-
-            {{ticket.model}}
-
-            <div class="small text-muted">
-
-              {{ticket.serialNumber}}
-
-            </div>
-
-          </td>
-
-          <td>
-
-            {{ticket.raisedByName}}
-
-          </td>
-
-          <td>
-
-            <span
-            [class]="getPriorityClass(ticket.priority)">
-
-              {{ticket.priority}}
-
-            </span>
-
-          </td>
-
-          <td>
-
-            <span
-            [class]="getStatusClass(ticket.status)">
-
-              {{ticket.status}}
-
-            </span>
-
-          </td>
-
-          <td>
-
-            {{formatDate(ticket.createdDate)}}
-
-          </td>
-
-          <td>
-
-            <button
-            class="btn-view"
-
-            (click)="viewTicket(ticket)">
-
-              <i class="bi bi-eye"></i>
-
-              View
-
-            </button>
-
-          </td>
-
-        </tr>
-
-        </tbody>
-
-      </table>
-
+        <div class="comment-box">
+          <label>Message to Admin</label>
+          <textarea rows="3" placeholder="Add a status update or question for the admin…" [(ngModel)]="commentText"></textarea>
+          <button class="btn-create" [disabled]="postingComment || !commentText.trim()" (click)="postComment()">
+            {{ postingComment ? 'Posting…' : 'Post' }}
+          </button>
+        </div>
+      </div>
     </div>
-
-  </div>
-
-</div>
-
-<!-- View Ticket Modal -->
-
-<div
-class="modal fade"
-
-[class.show]="showTicketModal"
-
-[style.display]="showTicketModal ? 'block':'none'">
-
-<div class="modal-dialog modal-lg">
-
-<div class="modal-content"
-
-*ngIf="selectedTicket">
-
-<div class="modal-header">
-
-<h5>
-
-{{selectedTicket.ticketNumber}}
-
-</h5>
-
-<button
-class="btn-close"
-
-(click)="showTicketModal=false">
-
-</button>
-
-</div>
-
-<div class="modal-body">
-
-<div class="row">
-
-<div class="col-md-6">
-
-<strong>Device:</strong>
-
-{{selectedTicket.model}}
-
-</div>
-
-<div class="col-md-6">
-
-<strong>Serial:</strong>
-
-{{selectedTicket.serialNumber}}
-
-</div>
-
-<div class="col-md-12 mt-3">
-
-<strong>Description:</strong>
-
-{{selectedTicket.issueDescription}}
-
-</div>
-
-<div class="col-md-6 mt-3">
-
-<strong>Raised By:</strong>
-
-{{selectedTicket.raisedByName}}
-
-</div>
-
-<div class="col-md-6 mt-3">
-
-<strong>Priority:</strong>
-
-<span
-[class]="getPriorityClass(selectedTicket.priority)">
-
-{{selectedTicket.priority}}
-
-</span>
-
-</div>
-
-</div>
-
-<hr>
-
-<h6>Status Update</h6>
-
-<select
-class="form-select"
-
-(change)="updateStatus(selectedTicket.ticketId,$event)"
-
-[value]="selectedTicket.status">
-
-<option value="Open">
-Open
-</option>
-
-<option value="InProgress">
-In Progress
-</option>
-
-<option value="Closed">
-Closed
-</option>
-
-</select>
-
-<hr>
-
-<hr>
-
-<h5>
-  Internal Discussion
-</h5>
-
-<div class="discussion-box">
-
-  <div
-  *ngFor="let comment of selectedTicket.ticketComments"
-  class="comment-card">
-
-    <div class="comment-header">
-
-      <strong>
-
-        {{comment.commentedByName}}
-
-      </strong>
-
-      <small>
-
-        {{formatDate(comment.createdDate)}}
-
-      </small>
-
-    </div>
-
-    <div class="comment-body">
-
-      {{comment.comment}}
-
-    </div>
-
-  </div>
-
-</div>
-
-<textarea
-class="form-control mt-3"
-rows="3"
-name="newComment"
-[(ngModel)]="newComment"
-placeholder="Type message to Admin...">
-
-</textarea>
-
-<button
-class="btn btn-primary mt-2"
-(click)="addComment()">
-
-<i class="bi bi-send"></i>
-
-Send Message
-
-</button>
-
-</div>
-
-</div>
-
-</div>
+  </aside>
 
 </div>

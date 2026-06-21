@@ -1,258 +1,255 @@
-<!-- admin-portal.component.html -->
-<div class="admin-portal">
-  <!-- Header -->
-  <div class="admin-header">
-    <div class="header-title">
-      <i class="bi bi-speedometer2"></i>
-      <h2>Admin Dashboard</h2>
-      <span class="live-badge">Live Analytics</span>
-    </div>
-    <button class="btn-refresh" (click)="loadAllTickets()">
-      <i class="bi bi-arrow-repeat"></i> Refresh
-    </button>
+<div class="admin-shell">
+
+  <!-- ambient console background -->
+  <div class="bg-ambient" aria-hidden="true">
+    <span class="glow glow-teal"></span>
+    <span class="glow glow-amber"></span>
+    <div class="grid-overlay"></div>
+    <div class="scan-line"></div>
   </div>
 
-  <!-- Stats Cards -->
-  <div class="stats-grid-admin">
-    <div class="stat-card-admin">
-      <div class="stat-icon blue"><i class="bi bi-inbox"></i></div>
-      <div class="stat-number">{{ stats.total }}</div>
-      <div class="stat-label">Total Tickets</div>
-    </div>
-    <div class="stat-card-admin">
-      <div class="stat-icon red"><i class="bi bi-exclamation-circle"></i></div>
-      <div class="stat-number">{{ stats.open }}</div>
-      <div class="stat-label">Open</div>
-    </div>
-    <div class="stat-card-admin">
-      <div class="stat-icon orange"><i class="bi bi-arrow-repeat"></i></div>
-      <div class="stat-number">{{ stats.inProgress }}</div>
-      <div class="stat-label">In Progress</div>
-    </div>
-    <div class="stat-card-admin">
-      <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
-      <div class="stat-number">{{ stats.closed }}</div>
-      <div class="stat-label">Closed</div>
-    </div>
-    <div class="stat-card-admin">
-      <div class="stat-icon purple"><i class="bi bi-flag"></i></div>
-      <div class="stat-number">{{ stats.highPriority }}</div>
-      <div class="stat-label">High Priority</div>
-    </div>
-    <div class="stat-card-admin">
-      <div class="stat-icon teal"><i class="bi bi-clock-history"></i></div>
-      <div class="stat-number">{{ stats.avgResolution }}h</div>
-      <div class="stat-label">Avg Resolution</div>
-    </div>
-  </div>
+  <main class="admin-content">
 
-  <!-- Charts Row -->
-  <div class="row g-4 mt-2">
-    <div class="col-md-5">
-      <div class="admin-card">
-        <div class="card-title">
-          <i class="bi bi-pie-chart"></i>
-          <h5>Ticket Distribution</h5>
-        </div>
-        <canvas id="statusChart" style="max-height: 250px;"></canvas>
+    <!-- ===================== HEADING ===================== -->
+    <header class="page-heading">
+      <div class="heading-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+          <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+          <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+        <span class="icon-ring"></span>
       </div>
-    </div>
-    <div class="col-md-7">
-      <div class="admin-card">
-        <div class="card-title">
-          <i class="bi bi-people"></i>
-          <h5>Quick Actions</h5>
+      <div>
+        <span class="heading-eyebrow">Operations Console</span>
+        <h1 class="heading-title">Admin Dashboard</h1>
+      </div>
+    </header>
+
+    <!-- ===================== STATS ===================== -->
+    <section class="stats-row">
+      <div class="stat-card physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">Total Tickets</span>
+        <span class="stat-value">{{ statTotal }}</span>
+      </div>
+      <div class="stat-card physical-card accent-teal" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">Open</span>
+        <span class="stat-value">{{ statOpen }}</span>
+      </div>
+      <div class="stat-card physical-card accent-amber" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">In Progress</span>
+        <span class="stat-value">{{ statInProgress }}</span>
+      </div>
+      <div class="stat-card physical-card accent-muted" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">Closed</span>
+        <span class="stat-value">{{ statClosed }}</span>
+      </div>
+      <div class="stat-card physical-card accent-danger" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">High Priority</span>
+        <span class="stat-value">{{ statHighPriority }}</span>
+      </div>
+      <div class="stat-card physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+        <span class="stat-label">Avg Resolution</span>
+        <span class="stat-value mono-value">{{ statAvgResolution }}</span>
+      </div>
+    </section>
+
+    <!-- ===================== CHART + QUICK ACTIONS ===================== -->
+    <section class="insight-row">
+
+      <div class="panel chart-panel">
+        <h3>Tickets Distribution</h3>
+
+        <div class="donut-wrap" *ngIf="statTotal > 0; else noData">
+          <svg viewBox="0 0 100 100" class="donut">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#1F2533" stroke-width="10"/>
+            <circle *ngFor="let seg of statusDistribution" cx="50" cy="50" r="42" fill="none"
+                    [attr.stroke]="seg.color" stroke-width="10"
+                    [attr.stroke-dasharray]="seg.dashArray"
+                    [attr.stroke-dashoffset]="seg.dashOffset"
+                    stroke-linecap="round" transform="rotate(-90 50 50)" class="donut-seg"/>
+          </svg>
+          <div class="donut-center">
+            <span class="donut-total">{{ statTotal }}</span>
+            <span class="donut-caption">Total</span>
+          </div>
         </div>
-        <div class="quick-actions">
-          <button class="action-btn" (click)="loadAllTickets()">
-            <i class="bi bi-arrow-repeat"></i> Refresh Data
-          </button>
-          <button class="action-btn" (click)="clearFilters()">
-            <i class="bi bi-eraser"></i> Clear Filters
-          </button>
+        <ng-template #noData><div class="empty-note">No ticket data yet.</div></ng-template>
+
+        <div class="legend">
+          <div class="legend-item" *ngFor="let seg of statusDistribution">
+            <span class="dot" [style.background]="seg.color"></span>
+            {{ seg.label }} <strong>{{ seg.count }}</strong>
+          </div>
         </div>
-        <div class="stats-summary mt-3">
-          <div class="summary-item">
-            <span>This Week:</span>
-            <strong>{{ stats.thisWeek }} new tickets</strong>
+
+        <div class="priority-bars">
+          <div class="bar-row" *ngFor="let p of priorityBreakdown">
+            <span class="bar-label">{{ p.label }}</span>
+            <div class="bar-track">
+              <div class="bar-fill" [style.width.%]="p.pct" [style.background]="p.color"></div>
+            </div>
+            <span class="bar-count mono">{{ p.count }}</span>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Filters -->
-  <div class="filters-admin">
-    <div class="row g-3">
-      <div class="col-md-2">
-        <select class="form-select" #statusFilter (change)="filters.status = statusFilter.value; applyFilters()">
+      <div class="panel actions-panel">
+        <h3>Quick Action</h3>
+        <div class="action-grid">
+          <button class="action-tile physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)" (click)="quickFilterUnassigned()">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c1.2-3.6 4-5.5 7-5.5s5.8 1.9 7 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M18 4l2 2-2 2M16 6h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <span>Unassigned Tickets</span>
+          </button>
+          <button class="action-tile physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)" (click)="quickFilterHighPriority()">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 6.6L22 10l-6 4.6L17.5 22 12 18l-5.5 4 1.5-7.4L2 10l7.4-1.4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            <span>High Priority Queue</span>
+          </button>
+          <button class="action-tile physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)" (click)="quickRefresh()">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 14a8 8 0 0 0 14.3 3.5M19 10A8 8 0 0 0 4.7 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>Refresh Data</span>
+          </button>
+          <button class="action-tile physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12M12 15l-4-4M12 15l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>Export Report</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FILTERS ===================== -->
+    <section class="filter-bar panel">
+      <div class="field">
+        <label>Status</label>
+        <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
           <option value="">All Status</option>
-          <option value="Open">Open</option>
-          <option value="InProgress">In Progress</option>
-          <option value="Closed">Closed</option>
+          <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
         </select>
       </div>
-      <div class="col-md-2">
-        <select class="form-select" #priorityFilter (change)="filters.priority = priorityFilter.value; applyFilters()">
+      <div class="field">
+        <label>Priority</label>
+        <select [(ngModel)]="priorityFilter" (ngModelChange)="applyFilters()">
           <option value="">All Priority</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
+          <option *ngFor="let p of priorityOptions" [value]="p">{{ p }}</option>
         </select>
       </div>
-      <div class="col-md-3">
-        <select class="form-select" #assignedFilter (change)="filters.assignedTo = assignedFilter.value; applyFilters()">
-          <option value="">All Assignees</option>
-          <option *ngFor="let user of users" [value]="user.userId">{{ user.fullName }}</option>
-        </select>
+      <div class="field search-field">
+        <label>Search Ticket ID</label>
+        <input type="text" placeholder="e.g. TCK-1042" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" />
       </div>
-      <div class="col-md-4">
-        <input type="text" class="form-control" #searchInput 
-               placeholder="Search tickets..." 
-               (keyup.enter)="filters.search = searchInput.value; applyFilters()">
+      <button class="btn-ghost" (click)="clearFilters()">Clear</button>
+    </section>
+
+    <!-- ===================== TABLE ===================== -->
+    <section class="panel table-panel" id="ticket-table-section">
+      <div class="table-scroll">
+        <table class="ticket-table">
+          <thead>
+            <tr>
+              <th>Tickets</th><th>Device / Issue</th><th>Raised By</th><th>Priority</th>
+              <th>Status</th><th>Assigned To</th><th>Created</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of pagedTickets; trackBy: trackByTicketId">
+              <td><span class="mono accent-left">{{ t.code }}</span></td>
+              <td class="device-cell">
+                <span class="device-name mono">{{ t.device }}</span>
+                <span class="issue-name truncate" [title]="t.issue">{{ t.issue }}</span>
+              </td>
+              <td>{{ t.raisedBy }}</td>
+              <td><span class="badge" [ngClass]="priorityClass(t.priority)">{{ t.priority }}</span></td>
+              <td>
+                <select class="status-select" [ngClass]="statusClass(t.status)" [value]="t.status" (change)="onStatusChange(t, $event)">
+                  <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+                </select>
+              </td>
+              <td>
+                <select class="assign-select" [value]="t.assignedToId" (change)="onAssignChange(t, $event)">
+                  <option value="">Unassigned</option>
+                  <option *ngFor="let u of users" [value]="userId(u)">{{ userName(u) }}</option>
+                </select>
+              </td>
+              <td>{{ t.createdDate ? (t.createdDate | date:'dd MMM yyyy') : '—' }}</td>
+              <td>
+                <button class="btn-eye" (click)="openTicket(t)" aria-label="View ticket">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!loading && filteredTickets.length === 0">
+              <td colspan="8" class="empty-state">
+                <ng-container *ngIf="!errorMessage">No tickets match the current filters.</ng-container>
+                <ng-container *ngIf="errorMessage">{{ errorMessage }}</ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="loading-overlay" *ngIf="loading">
+          <div class="loader-ring"></div><span>Loading tickets…</span>
+        </div>
       </div>
-      <div class="col-md-1">
-        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
-          <i class="bi bi-x"></i>
-        </button>
+
+      <div class="table-footer">
+        <span>Total: <strong>{{ filteredTickets.length }}</strong></span>
+        <div class="pagination" *ngIf="totalPages > 1">
+          <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+          <span>Page {{ currentPage }} / {{ totalPages }}</span>
+          <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+        </div>
       </div>
+    </section>
+
+  </main>
+
+  <!-- ===================== DETAIL DRAWER ===================== -->
+  <div class="drawer-backdrop" *ngIf="isDrawerOpen" (click)="closeDrawer()"></div>
+  <aside class="drawer" [class.open]="isDrawerOpen" *ngIf="selectedTicket as t">
+    <div class="drawer-header">
+      <div>
+        <span class="mono drawer-id">{{ t.code }}</span>
+        <span class="badge" [ngClass]="statusClass(t.status)">{{ t.status }}</span>
+      </div>
+      <button class="btn-close" (click)="closeDrawer()">✕</button>
     </div>
-  </div>
 
-  <!-- Tickets Table -->
-  <div class="table-wrapper">
-    <div class="table-responsive">
-      <table class="table admin-table">
-        <thead>
-          <tr>
-            <th>Ticket #</th>
-            <th>Device/Issue</th>
-            <th>Raised By</th>
-            <th>Priority</th>
-            <th>Status</th>
-            <th>Assigned To</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let ticket of filteredTickets">
-            <td>
-              <strong>{{ ticket.ticketNumber }}</strong>
-              <div class="small text-muted">ID: {{ ticket.ticketId }}</div>
-            </td>
-            <td>
-              {{ ticket.model }}
-              <div class="small text-muted">{{ ticket.issueType }}</div>
-            </td>
-            <td>{{ ticket.raisedByName || ticket.raisedBy }}</td>
-            <td><span [class]="getPriorityClass(ticket.priority)">{{ ticket.priority }}</span></td>
-            <td>
-              <select class="form-select form-select-sm status-select" 
-                      (change)="updateStatus(ticket.ticketId!, $event)"
-                      [value]="ticket.status">
-                <option value="Open">Open</option>
-                <option value="InProgress">In Progress</option>
-                <option value="Closed">Closed</option>
-              </select>
-            </td>
-            <td>{{ ticket.assignedToName || 'Unassigned' }}</td>
-            <td>{{ formatDate(ticket.createdDate) }}</td>
-            <td>
-              <button class="btn-icon" (click)="viewTicket(ticket)" title="View Details">
-                <i class="bi bi-eye"></i>
-              </button>
-              <button class="btn-icon" (click)="openAssignModal(ticket.ticketId!)" title="Assign">
-                <i class="bi bi-person-plus"></i>
-              </button>
-            </td>
-          </tr>
-          <tr *ngIf="filteredTickets.length === 0">
-            <td colspan="8" class="text-center py-5">
-              <i class="bi bi-inbox fs-1 text-muted"></i>
-              <p class="mt-2">No tickets found</p>
-            </td>
-          </tr>
-        </tbody>
-       </table>
-    </div>
-  </div>
-</div>
+    <div class="drawer-body">
+      <div class="drawer-row"><label>Device</label><span>{{ t.device }}</span></div>
+      <div class="drawer-row"><label>Issue</label><span>{{ t.issue }}</span></div>
+      <div class="drawer-row"><label>Description</label><span>{{ t.description || '—' }}</span></div>
+      <div class="drawer-row"><label>Priority</label><span class="badge" [ngClass]="priorityClass(t.priority)">{{ t.priority }}</span></div>
+      <div class="drawer-row"><label>Raised By</label><span>{{ t.raisedBy }}</span></div>
+      <div class="drawer-row"><label>Assigned To</label><span>{{ t.assignedTo }}</span></div>
+      <div class="drawer-row"><label>Created</label><span>{{ t.createdDate ? (t.createdDate | date:'dd MMM yyyy, h:mm a') : '—' }}</span></div>
 
-<!-- Assign Modal -->
-<div class="modal fade" [class.show]="showAssignModal" [style.display]="showAssignModal ? 'block' : 'none'" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Assign Ticket</h5>
-        <button type="button" class="btn-close" (click)="showAssignModal = false"></button>
-      </div>
-      <div class="modal-body">
-        <label class="form-label">Select Technician</label>
-        <select class="form-select" [(ngModel)]="selectedUserId">
-          <option [value]="0">-- Select User --</option>
-         <option
-*ngFor="let user of users"
-[value]="user.userId">
+      <div class="thread-section">
+        <div class="thread-toggle">
+          <button [class.active]="activeThread === 'client'" (click)="setThread('client')">To Client</button>
+          <button [class.active]="activeThread === 'employee'" (click)="setThread('employee')">To Employee</button>
+        </div>
 
-{{ user.username }}
-({{ user.role }})
-
-</option>
-        </select>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="showAssignModal = false">Cancel</button>
-        <button class="btn btn-primary" (click)="assignTicket()">Assign</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- View Ticket Modal -->
-<div class="modal fade" [class.show]="showTicketModal" [style.display]="showTicketModal ? 'block' : 'none'" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content" *ngIf="selectedTicket">
-      <div class="modal-header">
-        <h5 class="modal-title">Ticket Details - {{ selectedTicket.ticketNumber }}</h5>
-        <button type="button" class="btn-close" (click)="showTicketModal = false"></button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col-md-6">
-            <strong>Device:</strong> {{ selectedTicket.model }}
-          </div>
-          <div class="col-md-6">
-            <strong>Serial:</strong> {{ selectedTicket.serialNumber }}
-          </div>
-          <div class="col-12 mt-2">
-            <strong>Issue:</strong> {{ selectedTicket.issueDescription }}
-          </div>
-          <div class="col-md-4 mt-2">
-            <strong>Priority:</strong> <span [class]="getPriorityClass(selectedTicket.priority)">{{ selectedTicket.priority }}</span>
-          </div>
-          <div class="col-md-4 mt-2">
-            <strong>Status:</strong> <span [class]="getStatusClass(selectedTicket.status!)">{{ selectedTicket.status }}</span>
-          </div>
-          <div class="col-md-4 mt-2">
-            <strong>Assigned To:</strong> {{ selectedTicket.assignedToName || 'Unassigned' }}
+        <div class="thread-list" *ngIf="activeThreadComments.length > 0; else noThread">
+          <div class="thread-item" *ngFor="let c of activeThreadComments">
+            <div class="thread-meta"><strong>{{ c.author }}</strong><span class="mono">{{ c.time | date:'h:mm a' }}</span></div>
+            <p>{{ c.text }}</p>
           </div>
         </div>
-        <hr>
-        <h6>Comments</h6>
-        <div class="comments-list">
-          <div *ngFor="let comment of selectedTicket.comments" class="comment">
-            <strong>{{ comment.commentedBy }}</strong>
-            <small class="text-muted">{{ formatDate(comment.commentedDate) }}</small>
-            <p>{{ comment.comment }}</p>
+        <ng-template #noThread>
+          <div class="empty-note">
+            No {{ activeThread === 'client' ? 'client-facing' : 'internal' }} notes yet.
           </div>
+        </ng-template>
+
+        <div class="comment-box">
+          <label>{{ activeThread === 'client' ? 'Message to Client' : 'Note to Employee' }}</label>
+          <textarea rows="3" [placeholder]="activeThread === 'client' ? 'Update the client on progress…' : 'Internal note for the assigned technician…'" [(ngModel)]="commentText"></textarea>
+          <button class="btn-create" [disabled]="postingComment || !commentText.trim()" (click)="postComment()">
+            {{ postingComment ? 'Posting…' : 'Post' }}
+          </button>
         </div>
-        <textarea class="form-control mt-3" rows="2" [(ngModel)]="newComment" placeholder="Add a comment..."></textarea>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="showTicketModal = false">Close</button>
-        <button class="btn btn-primary" (click)="addComment()">Post Comment</button>
       </div>
     </div>
-  </div>
+  </aside>
+
 </div>

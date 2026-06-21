@@ -88,4 +88,13 @@ addComment(data: any): Observable<any> {
   );
 }
 
+
+
+getComments(ticketId: number): Observable<any[]> {
+
+  return this.http.get<any[]>(
+    `${this.baseUrl}/ticket/comments/${ticketId}`,
+    this.getHeaders()
+  );
+}
 }

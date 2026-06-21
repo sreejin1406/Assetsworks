@@ -1,0 +1,166 @@
+<div class="create-shell">
+
+  <!-- ambient console background -->
+  <div class="bg-ambient" aria-hidden="true">
+    <span class="glow glow-teal"></span>
+    <span class="glow glow-amber"></span>
+    <div class="grid-overlay"></div>
+    <div class="scan-line"></div>
+  </div>
+
+  <main class="create-content">
+
+    <!-- ===================== HEADING ===================== -->
+    <header class="page-heading">
+      <div class="heading-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M3 19c1-3.6 3.4-5.5 6-5.5s5 1.9 6 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M17 8h4M19 6v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span class="icon-ring"></span>
+      </div>
+      <div>
+        <span class="heading-eyebrow">Account Management</span>
+        <h1 class="heading-title">Create User / Client</h1>
+      </div>
+    </header>
+
+    <!-- ===================== TAB CARD ===================== -->
+    <section class="form-card physical-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
+
+      <div class="tab-rail" [class.is-user]="activeTab === 'user'" [class.is-client]="activeTab === 'client'">
+        <button class="tab-slot" [class.active]="activeTab === 'user'" (click)="switchTab('user')">New User</button>
+        <button class="tab-slot" [class.active]="activeTab === 'client'" (click)="switchTab('client')">New Client</button>
+        <div class="reader-light"></div>
+      </div>
+
+      <div class="flip-stage">
+
+        <!-- NEW USER (internal staff) -->
+        <form *ngIf="activeTab === 'user'" [formGroup]="userForm" class="tab-panel" (ngSubmit)="onSubmitUser()">
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Username</label>
+              <input type="text" formControlName="username" placeholder="Full name" />
+              <span class="field-error" *ngIf="userForm.get('username')?.touched && userForm.get('username')?.invalid">Required</span>
+            </div>
+            <div class="field">
+              <label>Role</label>
+              <select formControlName="role">
+                <option value="" disabled>Select role</option>
+                <option *ngFor="let r of roleOptions" [value]="r">{{ r }}</option>
+              </select>
+              <span class="field-error" *ngIf="userForm.get('role')?.touched && userForm.get('role')?.invalid">Required</span>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Email</label>
+              <input type="email" formControlName="email" placeholder="name@company.com" />
+              <span class="field-error" *ngIf="userForm.get('email')?.touched && userForm.get('email')?.invalid">Valid email required</span>
+            </div>
+            <div class="field">
+              <label>Mobile</label>
+              <input type="text" formControlName="mobile" placeholder="10-digit number" class="mono" />
+              <span class="field-error" *ngIf="userForm.get('mobile')?.touched && userForm.get('mobile')?.invalid">10 digits required</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Location</label>
+            <input type="text" formControlName="location" placeholder="Office / city (optional)" />
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Password</label>
+              <div class="password-input">
+                <input [type]="showUserPassword ? 'text' : 'password'" formControlName="password" placeholder="Minimum 6 characters" />
+                <button type="button" class="eye-toggle" (click)="showUserPassword = !showUserPassword">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                </button>
+              </div>
+              <span class="field-error" *ngIf="userForm.get('password')?.touched && userForm.get('password')?.invalid">Min 6 characters</span>
+            </div>
+            <div class="field">
+              <label>Confirm Password</label>
+              <input [type]="showUserPassword ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Re-enter password" />
+            </div>
+          </div>
+          <span class="field-error" *ngIf="userForm.errors?.['passwordMismatch'] && userForm.get('confirmPassword')?.touched">Passwords do not match</span>
+
+          <button type="button" class="btn-link" (click)="generateUserPassword()">Generate a temporary password</button>
+
+          <div class="form-actions">
+            <span class="form-msg success" *ngIf="successMessage">{{ successMessage }}</span>
+            <span class="form-msg error" *ngIf="errorMessage">{{ errorMessage }}</span>
+            <button type="submit" class="btn-create" [disabled]="submitting">
+              {{ submitting ? 'Creating…' : 'Create User' }}
+            </button>
+          </div>
+        </form>
+
+        <!-- NEW CLIENT -->
+        <form *ngIf="activeTab === 'client'" [formGroup]="clientForm" class="tab-panel" (ngSubmit)="onSubmitClient()">
+
+          <div class="field">
+            <label>Client / Company Name</label>
+            <input type="text" formControlName="clientName" placeholder="e.g. Acme Corp" />
+            <span class="field-error" *ngIf="clientForm.get('clientName')?.touched && clientForm.get('clientName')?.invalid">Required</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Email</label>
+              <input type="email" formControlName="email" placeholder="contact@client.com" />
+              <span class="field-error" *ngIf="clientForm.get('email')?.touched && clientForm.get('email')?.invalid">Valid email required</span>
+            </div>
+            <div class="field">
+              <label>Mobile</label>
+              <input type="text" formControlName="mobile" placeholder="10-digit number" class="mono" />
+              <span class="field-error" *ngIf="clientForm.get('mobile')?.touched && clientForm.get('mobile')?.invalid">10 digits required</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Location</label>
+            <input type="text" formControlName="location" placeholder="Site / office address" />
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Password</label>
+              <div class="password-input">
+                <input [type]="showClientPassword ? 'text' : 'password'" formControlName="password" placeholder="Minimum 6 characters" />
+                <button type="button" class="eye-toggle" (click)="showClientPassword = !showClientPassword">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                </button>
+              </div>
+              <span class="field-error" *ngIf="clientForm.get('password')?.touched && clientForm.get('password')?.invalid">Min 6 characters</span>
+            </div>
+            <div class="field">
+              <label>Confirm Password</label>
+              <input [type]="showClientPassword ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Re-enter password" />
+            </div>
+          </div>
+          <span class="field-error" *ngIf="clientForm.errors?.['passwordMismatch'] && clientForm.get('confirmPassword')?.touched">Passwords do not match</span>
+
+          <button type="button" class="btn-link" (click)="generateClientPassword()">Generate a temporary password</button>
+
+          <div class="form-actions">
+            <span class="form-msg success" *ngIf="successMessage">{{ successMessage }}</span>
+            <span class="form-msg error" *ngIf="errorMessage">{{ errorMessage }}</span>
+            <button type="submit" class="btn-create" [disabled]="submitting">
+              {{ submitting ? 'Creating…' : 'Create Client' }}
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </section>
+
+  </main>
+</div>

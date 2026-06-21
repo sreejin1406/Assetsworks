@@ -41,11 +41,26 @@ export class AssetdetailsService {
     return this.http.get(`${this.baseUrl}/GetSpecifications`)
   }
 
+  getReceivers() {
+  return this.http.get(`${this.baseUrl}/GetReceivers`);
+}
+
+getLocations() {
+  return this.http.get(`${this.baseUrl}/GetLocations`);
+}
+
   // 🔹 Save Asset
   saveAsset(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/SaveAsset`, data);
   }
 
+
+  importAssets(data: any) {
+  return this.http.post(
+    `${this.baseUrl}/ImportAssets`,
+    data
+  );
+}
   // 🔹 Save Replacement Asset
   saveReplacement(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/SaveReplacement`, data);

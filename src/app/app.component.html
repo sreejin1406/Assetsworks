@@ -1,10 +1,10 @@
 <div class="dashboard-container">
   <div class="navbar glass" *ngIf="showNavbar">
-    <div class="logo" routerLink="/dashboard">
-      <i class="bi bi-laptop"></i>
-      <span>QDIS</span>
-    </div>
-    <div class="nav-title">Q Digit Info Systems</div>
+   <div class="logo" routerLink="/dashboard">
+  <img src="../assets/img/QDlogo.png" alt="QDIS Logo" class="logo-img">
+  
+</div>
+    <!-- <div class="nav-title">Q Digit Info Systems</div> -->
     <div class="nav-links">
       <!-- Dashboard - Everyone -->
       <button routerLink="/dashboard" routerLinkActive="active" data-tooltip="Main Dashboard">
@@ -57,6 +57,15 @@ routerLinkActive="active">
         data-tooltip="Manage hardware assets">
         <i class="bi bi-hdd-stack"></i>
         <span>Assets Enter</span>
+      </button>
+
+       <button 
+        *ngIf="role === 'admin' || role === 'software developer'"
+        routerLink="/create-user" 
+        routerLinkActive="active"
+        data-tooltip="Manage hardware assets">
+        <i class="bi bi-hdd-stack"></i>
+        <span>Create user/clients</span>
       </button>
 
 <!-- Notification Bell -->

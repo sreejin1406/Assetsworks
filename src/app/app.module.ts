@@ -14,6 +14,7 @@ import { AuthInterceptor } from './auth.interceptor.service';
  import { ClientPortalComponent } from './client-portal/client-portal.component';
 import { AdminPortalComponent } from './admin-portal/admin-portal.component';
 import { EmployeePortalComponent } from './employee-portal/employee-portal.component';
+import { CreateUserComponent } from './create-user/create-user.component';
 
 @NgModule({
   declarations: [
@@ -25,6 +26,7 @@ AdminPortalComponent,
   
       ClientPortalComponent,
          EmployeePortalComponent,
+         CreateUserComponent,
       
   ],
   imports: [

@@ -337,6 +337,27 @@
       <div class="drawer-row"><label>Assigned To</label><span>{{ t.assignedTo }}</span></div>
       <div class="drawer-row"><label>Created</label><span>{{ t.createdDate ? (t.createdDate | date:'dd MMM yyyy, h:mm a') : '—' }}</span></div>
 
+
+<div class="conversation-box">
+
+  <div
+    *ngFor="let c of selectedTicketComments"
+    class="message"
+    [class.me]="c.commentedBy === currentUser.userId">
+
+    <div class="message-header">
+      <span>{{ c.commentedByName }}</span>
+      <small>{{ c.createdDate | date:'dd MMM yyyy hh:mm a' }}</small>
+    </div>
+
+    <div class="message-body">
+      {{ c.comment }}
+    </div>
+
+  </div>
+
+</div>
+
       <div class="comment-box">
         <label>Add Comment</label>
         <textarea rows="3" placeholder="Write an update or question…" [(ngModel)]="commentText"></textarea>

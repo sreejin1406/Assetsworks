@@ -85,6 +85,8 @@ export class ClientPortalComponent implements OnInit, OnDestroy {
   // ---------- tickets ----------
   tickets: Ticket[] = [];
   filteredTickets: Ticket[] = [];
+selectedTicketComments: any[] = [];
+
 
   // ---------- filters ----------
   statusFilter = '';
@@ -130,13 +132,37 @@ export class ClientPortalComponent implements OnInit, OnDestroy {
   private loadCurrentUser(): void {
     const decoded = this.decodeToken();
     this.currentUser = {
-      userId: decoded.id || decoded.sub || '',
-      username: decoded.name || decoded.unique_name || decoded.username || 'User',
-      email: decoded.email || '',
-      mobile: decoded.mobile || decoded.phone || '',
-      role: decoded.role || 'Client',
-      location: decoded.location || ''
-    };
+
+  userId:
+    decoded.UserId ||
+    decoded.userId ||
+    '',
+
+  username:
+    decoded.UserName ||
+    decoded.userName ||
+    '',
+
+  email:
+    decoded.Email ||
+    decoded.email ||
+    '',
+
+  mobile:
+    decoded.Mobile ||
+    decoded.mobile ||
+    '',
+
+  role:
+    decoded.Role ||
+    decoded.role ||
+    '',
+
+  location:
+    decoded.Location ||
+    decoded.location ||
+    ''
+};
 
     // Enrich with the full profile from /ticket/users if it's available there,
     // since the JWT usually only carries id/name/email/role.
@@ -237,51 +263,143 @@ export class ClientPortalComponent implements OnInit, OnDestroy {
   // Create ticket
   // =====================================================
 
-  onCreateTicket(): void {
-    const form = this.activeForm;
-    if (form.invalid) {
-      form.markAllAsTouched();
-      return;
-    }
+  // onCreateTicket(): void {
+  //   const form = this.activeForm;
+  //   if (form.invalid) {
+  //     form.markAllAsTouched();
+  //     return;
+  //   }
 
-    this.submitting = true;
-    this.successMessage = '';
-    this.errorMessage = '';
+  //   this.submitting = true;
+  //   this.successMessage = '';
+  //   this.errorMessage = '';
 
-    const basePayload: any = {
-      type: this.activeTab === 'repair' ? 'Repair' : this.activeTab === 'new' ? 'New' : 'Parts',
-      requestedBy: this.currentUser.userId,
-      requestedByName: this.currentUser.username,
-      requestedByEmail: this.currentUser.email,
-      requestedByLocation: this.currentUser.location,
-      ...form.value
-    };
+  //   const basePayload: any = {
+  //     type: this.activeTab === 'repair' ? 'Repair' : this.activeTab === 'new' ? 'New' : 'Parts',
+  //     requestedBy: this.currentUser.userId,
+  //     requestedByName: this.currentUser.username,
+  //     requestedByEmail: this.currentUser.email,
+  //     requestedByLocation: this.currentUser.location,
+  //     ...form.value
+  //   };
 
-    let payload: any = basePayload;
+  //   let payload: any = basePayload;
 
-    if (this.activeTab === 'parts' && this.selectedFile) {
-      const formData = new FormData();
-      Object.keys(basePayload).forEach((key: string) => formData.append(key, basePayload[key]));
-      formData.append('attachment', this.selectedFile, this.selectedFile.name);
-      payload = formData;
-    }
+  //   if (this.activeTab === 'parts' && this.selectedFile) {
+  //     const formData = new FormData();
+  //     Object.keys(basePayload).forEach((key: string) => formData.append(key, basePayload[key]));
+  //     formData.append('attachment', this.selectedFile, this.selectedFile.name);
+  //     payload = formData;
+  //   }
 
-    this.subs.add(
-      this.ticketService.createTicket(payload).subscribe({
-        next: () => {
-          this.successMessage = 'Ticket raised successfully.';
+  //   this.subs.add(
+  //     this.ticketService.createTicket(payload).subscribe({
+  //       next: () => {
+  //         this.successMessage = 'Ticket raised successfully.';
+  //         this.submitting = false;
+  //         this.resetActiveForm();
+  //         this.loadTickets();
+  //       },
+  //       error: (err: any) => {
+  //         console.error('Failed to create ticket', err);
+  //         this.errorMessage = 'Could not create the ticket. Please try again.';
+  //         this.submitting = false;
+  //       }
+  //     })
+  //   );
+  // }
+
+
+onCreateTicket(): void {
+
+  const form = this.activeForm;
+
+  if (form.invalid) {
+    form.markAllAsTouched();
+    return;
+  }
+
+  this.submitting = true;
+  this.successMessage = '';
+  this.errorMessage = '';
+
+  const formData = new FormData();
+
+  // Repair Ticket
+
+  formData.append(
+    'assetId',
+    this.repairForm.value.assetId
+  );
+
+  formData.append(
+    'issueTitle',
+    this.repairForm.value.issueTitle
+  );
+
+  formData.append(
+    'issueDescription',
+    this.repairForm.value.description
+  );
+
+  formData.append(
+    'priority',
+    this.repairForm.value.priority
+  );
+
+  // Optional Attachment
+
+  if (this.selectedFile) {
+
+    formData.append(
+      'attachment',
+      this.selectedFile,
+      this.selectedFile.name
+    );
+
+  }
+
+  this.subs.add(
+
+    this.ticketService.createTicket(formData)
+
+      .subscribe({
+
+        next: (res: any) => {
+
+          this.successMessage =
+            'Ticket raised successfully.';
+
           this.submitting = false;
+
           this.resetActiveForm();
+
           this.loadTickets();
         },
+
         error: (err: any) => {
-          console.error('Failed to create ticket', err);
-          this.errorMessage = 'Could not create the ticket. Please try again.';
+
+          console.error(
+            'Failed to create ticket',
+            err
+          );
+
+          console.log(
+            err.error
+          );
+
+          this.errorMessage =
+            err?.error?.title ||
+            'Could not create the ticket. Please try again.';
+
           this.submitting = false;
         }
+
       })
-    );
-  }
+
+  );
+
+}
 
   private resetActiveForm(): void {
     if (this.activeTab === 'repair') {
@@ -427,11 +545,27 @@ export class ClientPortalComponent implements OnInit, OnDestroy {
   // Detail drawer + comments
   // =====================================================
 
-  openTicket(ticket: Ticket): void {
-    this.selectedTicket = ticket;
-    this.isDrawerOpen = true;
-    this.commentText = '';
-  }
+openTicket(ticket: Ticket): void {
+
+  this.selectedTicket = ticket;
+
+  this.isDrawerOpen = true;
+
+  this.commentText = '';
+
+  this.loadComments(Number(ticket.id));
+}
+
+loadComments(ticketId: number) {
+
+  this.ticketService.getComments(ticketId)
+    .subscribe(comments => {
+
+      this.selectedTicketComments = comments;
+
+    });
+
+}
 
   closeDrawer(): void {
     this.isDrawerOpen = false;
@@ -444,7 +578,8 @@ export class ClientPortalComponent implements OnInit, OnDestroy {
     this.subs.add(
       this.ticketService.addComment({
         ticketId: this.selectedTicket.id,
-        comment: this.commentText.trim()
+        comment: this.commentText.trim(),
+commentedBy: this.currentUser.username
       }).subscribe({
         next: () => {
           this.commentText = '';

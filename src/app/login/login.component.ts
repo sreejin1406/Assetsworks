@@ -150,7 +150,7 @@ localStorage.setItem(
         role === 'software developer'
       ) {
 
-        this.router.navigate(['/admin-portal']);
+        this.router.navigate(['/dashboard']);
 
       }
       else if (role === 'head') {
