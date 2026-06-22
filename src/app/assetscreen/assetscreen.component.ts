@@ -28,7 +28,7 @@ selectedFileName = '';
   specifications: string[] = [];
 
   // ---------- forms ----------
- rentalForm = this.fb.group({
+rentalForm = this.fb.group({
   model: ['', Validators.required],
   serialNumber: ['', Validators.required],
   date: [this.today(), Validators.required],
@@ -37,12 +37,12 @@ selectedFileName = '';
 
   specification: [''],
 
-  dispatchedType: ['', Validators.required],
-  courierNumber: [''],
-  invoiceNumber: [''],
+  dispatchedType: [''],
+  dispatchedDetails: [''],
 
-  reciverDetails: [''],   // editable + dropdown assist
-  location: ['', Validators.required]
+  reciverDetails: [''],
+
+  location: ['']
 });
 
   repairForm: FormGroup = this.fb.group({
@@ -71,6 +71,7 @@ selectedFileName = '';
 locations: string[] = [];
 receivers: string[] = [];
 
+
   constructor(
     private fb: FormBuilder,
     private assetService: AssetdetailsService
@@ -78,6 +79,31 @@ receivers: string[] = [];
 
   ngOnInit(): void {
     this.loadDropdownData();
+    this.rentalForm.get('dispatchedType')
+?.valueChanges.subscribe(type => {
+
+  if(type === 'courier')
+  {
+    this.rentalForm.patchValue({
+      dispatchedDetails: 'Courier '
+    });
+  }
+
+  else if(type === 'porter')
+  {
+    this.rentalForm.patchValue({
+      dispatchedDetails: 'Porter '
+    });
+  }
+
+  else
+  {
+    this.rentalForm.patchValue({
+      dispatchedDetails: 'Hand Over'
+    });
+  }
+
+});
   }
 
   // =====================================================
@@ -87,25 +113,33 @@ receivers: string[] = [];
   private loadDropdownData(): void {
     this.loadingOptions = true;
     forkJoin({
-      models: this.assetService.getModels(),
-      clients: this.assetService.getClients(),
-      status: this.assetService.getStatus(),
-      serials: this.assetService.getSerialNumbers(),
-      specs: this.assetService.getspecifications()
-    }).subscribe({
-      next: (res: any) => {
-        this.models = this.normalizeList(res.models);
-        this.clients = this.normalizeList(res.clients);
-        this.statusOptions = this.normalizeList(res.status);
-        this.serialNumbers = this.normalizeList(res.serials);
-        this.specifications = this.normalizeList(res.specs);
-        this.loadingOptions = false;
-      },
-      error: (err: any) => {
-        console.error('Failed to load dropdown data', err);
-        this.errorMessage = 'Could not load form options. Please refresh.';
-        this.loadingOptions = false;
-      }
+  models: this.assetService.getModels(),
+  clients: this.assetService.getClients(),
+  status: this.assetService.getStatus(),
+  serials: this.assetService.getSerialNumbers(),
+  specs: this.assetService.getSpecifications(),
+  receivers: this.assetService.getReceivers(),
+  locations: this.assetService.getLocations()
+})
+.subscribe({
+  next: (res: any) => {
+
+    this.models = this.normalizeList(res.models);
+
+    this.clients = this.normalizeList(res.clients);
+
+    this.statusOptions = this.normalizeList(res.status);
+
+    this.serialNumbers = this.normalizeList(res.serials);
+
+    this.specifications = this.normalizeList(res.specs);
+
+    this.receivers = this.normalizeList(res.receivers);
+
+    this.locations = this.normalizeList(res.locations);
+  }
+
+    
     });
   }
 
@@ -240,31 +274,24 @@ formatExcelDate(excelDate: any): string {
 
 const form = this.rentalForm.value;
 
-let dispatchedDetails = '';
-
-if (form.dispatchedType === 'courier') {
-  dispatchedDetails = `Courier: ${form.courierNumber}`;
-}
-else if (form.dispatchedType === 'porter') {
-  dispatchedDetails = `Porter Invoice: ${form.invoiceNumber}`;
-}
-else {
-  dispatchedDetails = 'Hand Over';
-}
-
- const payload = {
+const payload = {
   model: form.model,
   serialNumber: form.serialNumber,
   status: form.status,
   date: form.date,
 
   clientsDetails: form.clientName,
+
   specification: form.specification,
 
-  dispatchedDetails: dispatchedDetails,
+  dispatchedDetails: form.dispatchedDetails,
+
   reciverDetails: form.reciverDetails,
+
   location: form.location
 };
+
+
 
     this.assetService.saveAsset(payload).subscribe({
       next: () => {

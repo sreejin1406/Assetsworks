@@ -11,7 +11,7 @@ import * as FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
+declare var bootstrap: any;
 export type AssetStatus = 'Rent' | 'Repair' | 'Sale' | string;
 
 export interface Asset {
@@ -163,6 +163,71 @@ this.assets = (data || []).map((raw: any) => this.mapAsset(raw));          this.
       location: raw.location ?? raw.Location ?? ''
     };
   }
+
+
+// ---------- asset editing ----------
+selectedAsset: any = {};
+isEditModalOpen = false;
+
+editAsset(asset: any): void {
+  this.selectedAsset = { ...asset };
+  this.isEditModalOpen = true;
+}
+
+closeModal(): void {
+  this.isEditModalOpen = false;
+}
+
+
+// ----------- delete asset-----------
+
+  deleteAsset(serialNumber: string): void {
+
+  if (!confirm('Are you sure you want to delete this asset?')) {
+    return;
+  }
+
+  this.assetService.deleteAsset(serialNumber)
+    .subscribe({
+      next: () => {
+        alert('Deleted Successfully');
+        this.loadAssets();
+      },
+      error: err => {
+        console.error(err);
+        alert('Delete Failed');
+      }
+    });
+}
+
+//-----save changes after editing asset-----
+saveAssetChanges(): void {
+
+  const payload = {
+    serialNumber: this.selectedAsset.serialNumber,
+    model: this.selectedAsset.model,
+    status: this.selectedAsset.status,
+    clientsDetails: this.selectedAsset.clientsDetails,
+    specification: this.selectedAsset.specification,
+    dispatchedDetails: this.selectedAsset.dispatchedDetails,
+    reciverDetails: this.selectedAsset.receiverDetails,
+    location: this.selectedAsset.location
+  };
+
+  this.assetService.updateAsset(payload)
+    .subscribe({
+      next: () => {
+        alert('Updated Successfully');
+
+        this.closeModal();
+
+        this.loadAssets();
+      },
+      error: err => {
+        console.error(err);
+      }
+    });
+}
 
   // ---------- filtering ----------
 

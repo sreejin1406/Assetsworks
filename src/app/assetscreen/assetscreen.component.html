@@ -117,63 +117,69 @@
                 <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
               </select>
             </div>
-            <div class="field">
-              <label>Specification</label>
-              <input type="text" formControlName="specification" placeholder="RAM, storage, display, etc." />
-            </div>
-          </div>
-
-          <div class="form-grid">
- <div class="field">
-  <label>Dispatch Type</label>
-  <select formControlName="  dispatchedDetails
-">
-    <option value="" disabled>Select type</option>
-    <option value="courier">Courier</option>
-    <option value="porter">Porter</option>
-    <option value="handover">Hand Over</option>
-  </select>
-</div>
-
-<!-- Courier -->
-<div class="field" *ngIf="rentalForm.value.  dispatchedType
- === 'courier'">
-  <label>Courier Number</label>
-  <input type="text" formControlName="courierNumber">
-</div>
-
-<!-- Porter -->
-<div class="field" *ngIf="rentalForm.value.  dispatchedType
- === 'porter'">
-  <label>Invoice Number</label>
-  <input type="text" formControlName="invoiceNumber">
-</div>
-
- <div class="field">
-  <label>Receiver Details</label>
-
-<select formControlName="reciverDetails">
-  <option value="" disabled>Select receiver</option>
-  <option *ngFor="let r of receivers" [value]="r">
-    {{ r }}
+          <div class="field"> 
+            <label>Specification</label> 
+            <input type="text" list="specificationList"  formControlName="specification" placeholder="RAM, storage, display, etc." /> 
+          <datalist id="specificationList">
+  <option
+    *ngFor="let s of specifications"
+    [value]="s">
   </option>
-</select>
+</datalist>
+          </div> 
+         
+          
 
-  <input
-    type="text"
-    formControlName="reciverDetails"
-    placeholder="Or type manually / edit selected"
+          <div class="field">
+  <label>Dispatch Details</label>
+
+  <input type="text"
+    list="dispatchList"
+    formControlName="dispatchedDetails"
+    placeholder="Select or type dispatch details"
   />
-</div>
+
+  <datalist id="dispatchList">
+    <option value="Courier"></option>
+    <option value="Porter"></option>
+    <option value="Hand Over"></option>
+  </datalist>
 </div>
 
 <div class="field">
-  <label>Location</label>
 
-  <select formControlName="location">
-    <option value="" disabled>Select location</option>
-    <option *ngFor="let l of locations" [value]="l">{{ l }}</option>
-  </select>
+<label>Receiver Details</label>
+
+<input type="text"
+ list="receiverList"
+ formControlName="reciverDetails"
+ placeholder="Select or type receiver"
+/>
+
+<datalist id="receiverList">
+
+<option
+ *ngFor="let r of receivers"
+ [value]="r">
+</option>
+
+</datalist>
+
+</div>
+          </div>
+
+<div class="field">
+<label>Location</label>
+<select formControlName="location">
+<option value="">
+Select Location
+</option>
+<option
+ *ngFor="let l of locations"
+ [value]="l">
+{{ l }}
+</option>
+</select>
 </div>
 
           <div class="form-actions">

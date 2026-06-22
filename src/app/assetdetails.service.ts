@@ -41,13 +41,7 @@ export class AssetdetailsService {
     return this.http.get(`${this.baseUrl}/GetSpecifications`)
   }
 
-  getReceivers() {
-  return this.http.get(`${this.baseUrl}/GetReceivers`);
-}
 
-getLocations() {
-  return this.http.get(`${this.baseUrl}/GetLocations`);
-}
 
   // 🔹 Save Asset
   saveAsset(data: any): Observable<any> {
@@ -73,6 +67,37 @@ getLocations() {
  //  status update
   updateStatusOnly(data: any) {
   return this.http.put(`${this.baseUrl}/UpdateStatusOnly`, data);
+}
+
+deleteAsset(serialNumber: string) {
+  return this.http.delete(
+    `${this.baseUrl}/DeleteAsset/${serialNumber}`
+  );
+}
+
+updateAsset(data: any) {
+  return this.http.put(
+    `${this.baseUrl}/UpdateAsset`,
+    data
+  );
+}
+
+getSpecifications() {
+  return this.http.get<string[]>(
+    `${this.baseUrl}/GetSpecifications`
+  );
+}
+
+getReceivers() {
+  return this.http.get<string[]>(
+    `${this.baseUrl}/GetReceivers`
+  );
+}
+
+getLocations() {
+  return this.http.get<string[]>(
+    `${this.baseUrl}/GetLocations`
+  );
 }
 
 }

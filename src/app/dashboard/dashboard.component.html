@@ -103,69 +103,234 @@
         </div>
       </div>
     </section>
+  <section class="table-section glass floating">
+  <div class="table-header">
+    <h2>Asset Records</h2>
+    <span class="record-pill">
+      Total Records: {{ filteredAssets.length }}
+    </span>
+  </div>
+
+  <div class="table-scroll">
+
+    <table class="asset-table">
+
+      <thead>
+        <tr>
+          <th>Asset ID</th>
+          <th>Model</th>
+          <th>Serial Number</th>
+          <th>Client Details</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Specification</th>
+          <th>Dispatched Details</th>
+          <th>Receiver Details</th>
+          <th>Location</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <tr
+          class="hud-row"
+          *ngFor="let asset of pagedAssets; trackBy: trackByAssetId">
+
+          <td>
+            <span class="mono accent-left">
+              {{ asset.assetId }}
+            </span>
+          </td>
+
+          <td>{{ asset.model }}</td>
+
+          <td>
+            <span class="mono">
+              {{ asset.serialNumber }}
+            </span>
+          </td>
+
+          <td>{{ asset.clientsDetails }}</td>
+
+          <td>
+            <span
+              class="status-badge"
+              [ngClass]="statusClass(asset.status)">
+              {{ asset.status }}
+            </span>
+          </td>
+
+          <td>
+            {{ asset.date ? (asset.date | date:'dd MMM yyyy') : '—' }}
+          </td>
+
+          <td
+            class="truncate"
+            [title]="asset.specification">
+            {{ asset.specification }}
+          </td>
+
+          <td>{{ asset.dispatchedDetails }}</td>
+
+          <td>{{ asset.receiverDetails }}</td>
+
+          <td>{{ asset.location }}</td>
+
+          <!-- ACTIONS -->
+          <td class="action-cell">
+
+            <button
+              class="btn-edit"
+              (click)="editAsset(asset)">
+              ✏ Edit
+            </button>
+
+            <button
+              class="btn-delete"
+              (click)="deleteAsset(asset.serialNumber)">
+              🗑 Delete
+            </button>
+
+          </td>
+
+        </tr>
+
+        <tr *ngIf="!loading && filteredAssets.length === 0">
+          <td colspan="11" class="empty-state">
+
+            <ng-container *ngIf="!errorMessage">
+              No assets match the current filters.
+            </ng-container>
+
+            <ng-container *ngIf="errorMessage">
+              {{ errorMessage }}
+            </ng-container>
+
+          </td>
+        </tr>
+
+      </tbody>
+
+    </table>
+
+   
+
+    <div class="loading-overlay" *ngIf="loading">
+      <div class="loader-ring"></div>
+      <span>Syncing asset data…</span>
+    </div>
+
+  </div>
+
+   <div class="modal fade show"
+     *ngIf="isEditModalOpen"
+     style="display:block;background:rgba(0,0,0,.6)"
+     id="editAssetModal">
+
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content edit-modal-content">
+
+      <div class="modal-header edit-modal-header">
+        <div class="modal-title-wrap">
+          <svg viewBox="0 0 24 24" fill="none" class="modal-title-icon">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h5 class="modal-title">Edit Asset</h5>
+        </div>
+        <button type="button" class="edit-close-btn" (click)="closeModal()">✕</button>
+      </div>
+
+      <div class="modal-body edit-modal-body" *ngIf="selectedAsset">
+        <div class="edit-grid">
+
+          <div class="edit-field">
+            <label>Model</label>
+            <input class="form-control edit-input" [(ngModel)]="selectedAsset.model" placeholder="Enter model" />
+          </div>
+
+          <div class="edit-field">
+            <label>Client Details</label>
+            <input class="form-control edit-input" [(ngModel)]="selectedAsset.clientsDetails" placeholder="Enter client details" />
+          </div>
+
+          <div class="edit-field">
+            <label>Status</label>
+            <input class="form-control edit-input" [(ngModel)]="selectedAsset.status" placeholder="Enter status" />
+          </div>
+
+          <div class="edit-field">
+            <label>Specification</label>
+            <input class="form-control edit-input" [(ngModel)]="selectedAsset.specification" placeholder="Enter specification" />
+          </div>
+
+          <div class="edit-field">
+            <label>Dispatched Details</label>
+            <input class="form-control edit-input" [(ngModel)]="selectedAsset.dispatchedDetails" placeholder="Enter dispatched details" />
+          </div>
+
+          <div class="edit-field">
+            <label>Receiver Details</label>
+            <input class="form-control edit-input" [(ngModel)]="selectedAsset.receiverDetails" placeholder="Enter receiver details" />
+          </div>
+
+          <div class="edit-field">
+            <label>Location</label>
+            <input class="form-control edit-input" [(ngModel)]="selectedAsset.location" placeholder="Enter location" />
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal-footer edit-modal-footer">
+        <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+        <button class="btn-update" (click)="saveAssetChanges()">
+          <svg viewBox="0 0 24 24" fill="none" width="15" height="15">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Update Asset
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+  <div class="table-footer">
+
+    <span class="total-records">
+      Total Records:
+      <strong>{{ filteredAssets.length }}</strong>
+    </span>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+
+      <button
+        (click)="goToPage(currentPage - 1)"
+        [disabled]="currentPage === 1">
+        ‹
+      </button>
+
+      <span>
+        Page {{ currentPage }} / {{ totalPages }}
+      </span>
+
+      <button
+        (click)="goToPage(currentPage + 1)"
+        [disabled]="currentPage === totalPages">
+        ›
+      </button>
+
+    </div>
+
+  </div>
+</section>
 
     <!-- table -->
-    <section class="table-section glass floating">
-      <div class="table-header">
-        <h2>Asset Records</h2>
-        <span class="record-pill">Total Records: {{ filteredAssets.length }}</span>
-      </div>
-
-      <div class="table-scroll">
-        <table class="asset-table">
-          <thead>
-            <tr>
-              <th>Asset ID</th>
-              <th>Model</th>
-              <th>Serial Number</th>
-              <th>Client Details</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Specification</th>
-              <th>Dispatched Details</th>
-              <th>Receiver Details</th>
-              <th>Location</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="hud-row" *ngFor="let asset of pagedAssets; trackBy: trackByAssetId">
-              <td><span class="mono accent-left">{{ asset.assetId }}</span></td>
-              <td>{{ asset.model }}</td>
-              <td><span class="mono">{{ asset.serialNumber }}</span></td>
-              <td>{{ asset.clientsDetails }}</td>
-              <td><span class="status-badge" [ngClass]="statusClass(asset.status)">{{ asset.status }}</span></td>
-              <td>{{ asset.date ? (asset.date | date:'dd MMM yyyy') : '—' }}</td>
-              <td class="truncate" [title]="asset.specification">{{ asset.specification }}</td>
-              <td>{{ asset.dispatchedDetails }}</td>
-              <td>{{ asset.receiverDetails }}</td>
-              <td>{{ asset.location }}</td>
-            </tr>
-
-            <tr *ngIf="!loading && filteredAssets.length === 0">
-              <td colspan="10" class="empty-state">
-                <ng-container *ngIf="!errorMessage">No assets match the current filters.</ng-container>
-                <ng-container *ngIf="errorMessage">{{ errorMessage }}</ng-container>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="loading-overlay" *ngIf="loading">
-          <div class="loader-ring"></div>
-          <span>Syncing asset data…</span>
-        </div>
-      </div>
-
-      <div class="table-footer">
-        <span class="total-records">Total Records: <strong>{{ filteredAssets.length }}</strong></span>
-
-        <div class="pagination" *ngIf="totalPages > 1">
-          <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
-          <span>Page {{ currentPage }} / {{ totalPages }}</span>
-          <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
-        </div>
-      </div>
-    </section>
-
+  
   </main>
 </div>
