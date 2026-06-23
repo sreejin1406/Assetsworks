@@ -150,6 +150,33 @@
   font-weight:600;
 }
 
+.table-wrapper{
+  margin-top:30px;
+  overflow-x:auto;
+}
+
+.replacement-table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.replacement-table th,
+.replacement-table td{
+  padding:12px;
+  text-align:left;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+
+.replacement-table th{
+  color:#4ddcff;
+  font-weight:600;
+}
+
+.empty-row{
+  text-align:center;
+  padding:20px;
+}
+
 /* ---------- glass + tilt + HUD border ---------- */
 
 .glass {

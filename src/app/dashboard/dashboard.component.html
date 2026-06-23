@@ -102,6 +102,35 @@
           <span class="status-count">{{ statusCounts.sold }}</span>
         </div>
       </div>
+
+      <div class="status-card hud-card tilt-card stock"
+     [class.active]="selectedStatus === 'In Stock'"
+     (click)="filterByStatus('In Stock')"
+     (mousemove)="onTiltMove($event)"
+     (mouseleave)="onTiltLeave($event)">
+
+  <div class="status-pulse pulse-stock"></div>
+
+  <div class="status-icon">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M4 7L12 3L20 7L12 11L4 7Z"
+            stroke="currentColor"
+            stroke-width="1.6"/>
+      <path d="M4 7V17L12 21L20 17V7"
+            stroke="currentColor"
+            stroke-width="1.6"/>
+    </svg>
+  </div>
+
+  <div class="status-info">
+    <span class="status-label">In Stock</span>
+    <span class="status-count">
+      {{ statusCounts.inStock }}
+    </span>
+  </div>
+
+</div>
+
     </section>
   <section class="table-section glass floating">
   <div class="table-header">

@@ -31,6 +31,7 @@ interface StatusCounts {
   rent: number;
   repair: number;
   sold: number;
+  inStock: number;
 }
 
 @Component({
@@ -58,7 +59,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
 
   // ---------- status summary ----------
-  statusCounts: StatusCounts = { rent: 0, repair: 0, sold: 0 };
+  statusCounts: StatusCounts = { rent: 0, repair: 0, sold: 0, inStock: 0 };
 
   // ---------- pagination ----------
   currentPage = 1;
@@ -107,15 +108,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.subs.add(
       this.assetService.getAllAssets().subscribe({
-        next: (data) => {
-this.assets = (data || []).map((raw: any) => this.mapAsset(raw));          this.applyFilters();
-          this.loading = false;
-        },
-        error: (err) => {
-          console.error('Failed to load assets', err);
-          this.errorMessage = 'Could not load asset records. Please try again.';
-          this.loading = false;
-        }
+      next: (data) => {
+
+  this.assets = (data || []).map((raw: any) =>
+    this.mapAsset(raw)
+  );
+
+  console.log('TOTAL API RECORDS:', this.assets.length);
+
+  console.log(
+    'HP RECORDS:',
+    this.assets.filter(x =>
+      (x.model || '').toLowerCase().includes('440')
+    ).length
+  );
+
+  this.applyFilters();
+
+  this.loading = false;
+}
       })
     );
   }
@@ -203,6 +214,8 @@ closeModal(): void {
 //-----save changes after editing asset-----
 saveAssetChanges(): void {
 
+ console.log('Selected Asset:', this.selectedAsset);
+
   const payload = {
     serialNumber: this.selectedAsset.serialNumber,
     model: this.selectedAsset.model,
@@ -213,6 +226,8 @@ saveAssetChanges(): void {
     reciverDetails: this.selectedAsset.receiverDetails,
     location: this.selectedAsset.location
   };
+
+  console.log('Payload:', payload);
 
   this.assetService.updateAsset(payload)
     .subscribe({
@@ -240,30 +255,85 @@ saveAssetChanges(): void {
     this.applyFilters();
   }
 
-  applyFilters(): void {
-    const term = this.searchTerm.trim().toLowerCase();
-    const from = this.fromDate ? new Date(this.fromDate) : null;
-    const to = this.toDate ? new Date(this.toDate) : null;
+ applyFilters(): void {
 
-    this.filteredAssets = this.assets.filter(asset => {
-      if (this.selectedClient && asset.clientsDetails !== this.selectedClient) { return false; }
-      if (this.selectedModel && asset.model !== this.selectedModel) { return false; }
-      if (this.selectedStatus && asset.status !== this.selectedStatus) { return false; }
+  const term = this.searchTerm?.trim().toLowerCase() || '';
 
-      if (term) {
-        const haystack = `${asset.assetId} ${asset.serialNumber} ${asset.clientsDetails} ${asset.model} ${asset.location}`.toLowerCase();
-        if (!haystack.includes(term)) { return false; }
+  const from = this.fromDate ? new Date(this.fromDate) : null;
+  const to = this.toDate ? new Date(this.toDate) : null;
+
+  this.filteredAssets = this.assets.filter(asset => {
+
+    // CLIENT FILTER
+    if (this.selectedClient) {
+      const client =
+        (asset.clientsDetails || '').trim().toLowerCase();
+
+      const selectedClient =
+        this.selectedClient.trim().toLowerCase();
+
+      if (client !== selectedClient) {
+        return false;
       }
+    }
 
-      if (from && (!asset.date || asset.date < from)) { return false; }
-      if (to && (!asset.date || asset.date > to)) { return false; }
+    // MODEL FILTER
+    if (this.selectedModel) {
+      const model =
+        (asset.model || '').trim().toLowerCase();
 
-      return true;
-    });
+      const selectedModel =
+        this.selectedModel.trim().toLowerCase();
 
-    this.recomputeStatusCounts();
-    this.currentPage = 1;
-  }
+      if (model !== selectedModel) {
+        return false;
+      }
+    }
+
+    // STATUS FILTER
+    if (this.selectedStatus) {
+      const status =
+        (asset.status || '').trim().toLowerCase();
+
+      const selectedStatus =
+        this.selectedStatus.trim().toLowerCase();
+
+      if (status !== selectedStatus) {
+        return false;
+      }
+    }
+
+    // SEARCH
+    if (term) {
+      const haystack = `
+        ${asset.assetId}
+        ${asset.serialNumber}
+        ${asset.clientsDetails}
+        ${asset.model}
+        ${asset.status}
+        ${asset.location}
+      `.toLowerCase();
+
+      if (!haystack.includes(term)) {
+        return false;
+      }
+    }
+
+    // DATE FILTER
+    if (from && asset.date && asset.date < from) {
+      return false;
+    }
+
+    if (to && asset.date && asset.date > to) {
+      return false;
+    }
+
+    return true;
+  });
+
+  this.recomputeStatusCounts();
+  this.currentPage = 1;
+}
 
   clearFilters(): void {
     this.selectedClient = '';
@@ -275,16 +345,37 @@ saveAssetChanges(): void {
     this.applyFilters();
   }
 
-  private recomputeStatusCounts(): void {
-    const counts: StatusCounts = { rent: 0, repair: 0, sold: 0 };
-    for (const asset of this.filteredAssets) {
-      const status = (asset.status || '').toLowerCase();
-      if (status === 'rent') { counts.rent++; }
-      else if (status === 'repair') { counts.repair++; }
-      else if (status === 'sold') { counts.sold++; }
+ private recomputeStatusCounts(): void {
+
+  const counts: StatusCounts = {
+    rent: 0,
+    repair: 0,
+    sold: 0,
+    inStock: 0
+  };
+
+  for (const asset of this.filteredAssets) {
+
+    const status = (asset.status || '')
+      .trim()
+      .toLowerCase();
+
+    if (status === 'rent') {
+      counts.rent++;
     }
-    this.statusCounts = counts;
+    else if (status === 'repair') {
+      counts.repair++;
+    }
+    else if (status === 'sale' || status === 'sold') {
+      counts.sold++;
+    }
+    else if (status === 'instock' || status === 'in stock') {
+      counts.inStock++;
+    }
   }
+
+  this.statusCounts = counts;
+}
 
   statusClass(status: AssetStatus): string {
     switch ((status || '').toLowerCase()) {

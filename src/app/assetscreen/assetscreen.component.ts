@@ -26,7 +26,7 @@ selectedFileName = '';
   statusOptions: string[] = [];
   serialNumbers: string[] = [];
   specifications: string[] = [];
-
+replacements: any[] = [];
   // ---------- forms ----------
 rentalForm = this.fb.group({
   model: ['', Validators.required],
@@ -45,14 +45,21 @@ rentalForm = this.fb.group({
   location: ['']
 });
 
-  repairForm: FormGroup = this.fb.group({
-    model: ['', Validators.required],
-    serialNumber: ['', Validators.required],
-    date: [this.today(), Validators.required],
-    clientName: ['', Validators.required],
-    status: ['Repair', Validators.required],
-    issueDescription: ['', Validators.required]
-  });
+ repairForm = this.fb.group({
+  model: ['', Validators.required],
+  serialNumber: ['', Validators.required],
+  date: [this.today(), Validators.required],
+  clientName: ['', Validators.required],
+
+  status: ['Repair', Validators.required],
+
+  specification: [''],
+  dispatchedDetails: [''],
+  reciverDetails: [''],
+  location: [''],
+
+  issueDescription: ['', Validators.required]
+});
 
   replacementForm: FormGroup = this.fb.group({
     model: ['', Validators.required],
@@ -70,7 +77,8 @@ rentalForm = this.fb.group({
   errorMessage = '';
 locations: string[] = [];
 receivers: string[] = [];
-
+allAssets: any[] = [];
+replacementSerialNumbers: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -78,6 +86,8 @@ receivers: string[] = [];
   ) { }
 
   ngOnInit(): void {
+    this.loadReplacements();
+    this.loadAssets();
     this.loadDropdownData();
     this.rentalForm.get('dispatchedType')
 ?.valueChanges.subscribe(type => {
@@ -311,41 +321,74 @@ const payload = {
   // Submit — Repair / Rework
   // =====================================================
 
-  onSubmitRepair(): void {
-    if (this.repairForm.invalid) {
-      this.repairForm.markAllAsTouched();
-      return;
-    }
-    this.submitting = true;
-    this.clearMessages();
+ onSubmitRepair(): void {
 
-    // No dedicated "save repair" endpoint is exposed on AssetdetailsService yet,
-    // so this reuses saveAsset() with a category flag. Swap in a real
-    // saveRepair() call once the backend has one.
-   const payload = {
-  model: this.repairForm.value.model,
-  serialNumber: this.repairForm.value.serialNumber,
-  status: 'Repair',
-  date: this.repairForm.value.date,
-  clientsDetails: this.repairForm.value.clientName,
-  specification: '',
-  dispatchedDetails: '',
-  reciverDetails: '',
-  location: ''
-};
-    this.assetService.saveAsset(payload).subscribe({
-      next: () => {
-        this.successMessage = 'Repair request logged successfully.';
-        this.submitting = false;
-        this.repairForm.reset({ model: '', serialNumber: '', date: this.today(), clientName: '', status: 'Repair', issueDescription: '' });
-      },
-      error: (err: any) => {
-        console.error('Failed to log repair', err);
-        this.errorMessage = 'Could not log the repair. Please try again.';
-        this.submitting = false;
-      }
-    });
+  if (this.repairForm.invalid) {
+    this.repairForm.markAllAsTouched();
+    return;
   }
+
+  this.submitting = true;
+  this.clearMessages();
+
+  const form = this.repairForm.value;
+
+  const payload = {
+    model: form.model,
+    serialNumber: form.serialNumber,
+
+    status: 'Repair',
+
+    date: form.date,
+
+    clientsDetails: form.clientName,
+
+    specification: form.specification,
+
+    dispatchedDetails: form.dispatchedDetails,
+
+    reciverDetails: form.reciverDetails,
+
+    location: form.location,
+
+    issueDescription: form.issueDescription
+  };
+
+  this.assetService.saveAsset(payload).subscribe({
+    next: () => {
+
+      this.successMessage =
+        'Repair request logged successfully.';
+
+      this.submitting = false;
+
+      this.repairForm.reset({
+        model: '',
+        serialNumber: '',
+        date: this.today(),
+        clientName: '',
+        status: 'Repair',
+
+        specification: '',
+        dispatchedDetails: '',
+        reciverDetails: '',
+        location: '',
+
+        issueDescription: ''
+      });
+    },
+
+    error: (err: any) => {
+
+      console.error(err);
+
+      this.errorMessage =
+        'Could not log repair.';
+
+      this.submitting = false;
+    }
+  });
+}
 
   // =====================================================
   // Submit — Replacement
@@ -364,7 +407,7 @@ const payload = {
   serialNumber: this.replacementForm.value.newSerialNumber,
   replacedSerialNumber: this.replacementForm.value.oldSerialNumber,
   date: this.replacementForm.value.date,
-  details: this.replacementForm.value.clientName,
+  clientsDetails: this.replacementForm.value.clientName,
   specifications: this.replacementForm.value.specification
 };
 
@@ -386,6 +429,71 @@ const payload = {
     this.successMessage = '';
     this.errorMessage = '';
   }
+
+onOldSerialChange(): void {
+
+  const serial =
+    this.replacementForm.value.oldSerialNumber;
+
+  const asset = this.allAssets.find(
+    x =>
+      x.serialNumber === serial ||
+      x.SerialNumber === serial
+  );
+
+  if (!asset) {
+    return;
+  }
+
+  this.replacementForm.patchValue({
+
+    model:
+      asset.model ??
+      asset.Model,
+
+    clientName:
+      asset.clientsDetails ??
+      asset.ClientsDetails,
+
+    specification:
+      asset.specification ??
+      asset.Specification
+  });
+}
+loadAssets(): void {
+
+  this.assetService
+    .getAllAssets()
+    .subscribe({
+      next: (res: any) => {
+
+        this.allAssets = res;
+
+        this.replacementSerialNumbers =
+          this.allAssets
+            .filter((x: any) =>
+              (x.status ?? x.Status)?.toLowerCase() === 'rent'
+            )
+            .map((x: any) =>
+              x.serialNumber ?? x.SerialNumber
+            );
+      }
+    });
+}
+
+loadReplacements(): void {
+
+  this.assetService
+    .getReplacements()
+    .subscribe({
+      next: (data) => {
+        this.replacements = data;
+      },
+      error: (err) => {
+        console.error(err);
+      }
+    });
+}
 
   // =====================================================
   // 3D tilt + mouse-follow glow (form card)

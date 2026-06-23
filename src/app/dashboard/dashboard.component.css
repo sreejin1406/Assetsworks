@@ -444,7 +444,7 @@ select option { background: var(--bg-elev); color: var(--text-primary); }
 
 .status-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
@@ -499,6 +499,25 @@ select option { background: var(--bg-elev); color: var(--text-primary); }
   top: 16px; right: 16px;
   width: 9px; height: 9px;
   border-radius: 50%;
+}
+
+.status-card.stock {
+  --c: #8b5cf6;
+}
+
+.pulse-stock {
+  background: #8b5cf6;
+  animation: pingStock 2.2s cubic-bezier(.4,0,.6,1) infinite;
+}
+
+@keyframes pingStock {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139,92,246,.55);
+  }
+
+  70%,100% {
+    box-shadow: 0 0 0 13px rgba(139,92,246,0);
+  }
 }
 .pulse-rent   { background: var(--cyan);    animation: pingCyan 2.2s cubic-bezier(.4,0,.6,1) infinite; }
 .pulse-repair { background: var(--amber);   animation: pingAmber 2.2s cubic-bezier(.4,0,.6,1) infinite; }
