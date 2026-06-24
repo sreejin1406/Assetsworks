@@ -18,4 +18,11 @@ export class CreateserviceService {
   createClient(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/CreateClient`, data);
   }
+
+  resetPassword(data: any) {
+  return this.http.post(
+    `${this.apiUrl}/ResetPassword`,
+    data
+  );
+}
 }

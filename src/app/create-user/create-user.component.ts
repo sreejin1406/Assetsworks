@@ -54,11 +54,19 @@ export class CreateUserComponent implements OnInit {
   // Cross-field validator
   // =====================================================
 
-  private passwordsMatch(group: AbstractControl): ValidationErrors | null {
-    const pass = group.get('password')?.value;
-    const confirm = group.get('confirmPassword')?.value;
-    return pass && confirm && pass !== confirm ? { passwordMismatch: true } : null;
+private passwordsMatch(control: AbstractControl): ValidationErrors | null {
+
+  const password = control.get('password');
+  const confirmPassword = control.get('confirmPassword');
+
+  if (!password || !confirmPassword) {
+    return null;
   }
+
+  return password.value === confirmPassword.value
+    ? null
+    : { passwordMismatch: true };
+}
 
   // =====================================================
   // Tabs
@@ -122,9 +130,16 @@ export class CreateUserComponent implements OnInit {
   };
 
   this.createService.createUser(payload).subscribe({
-    next: (res: any) => {
+   next: (res:any)=>{
 
-      this.successMessage = `${payload.role} account created for ${payload.username}.`;
+ if(res.success){
+
+    this.successMessage = res.message;
+
+ }else{
+
+    this.errorMessage = res.message;
+ }
       this.submitting = false;
 
       this.userForm.reset({
@@ -177,8 +192,16 @@ export class CreateUserComponent implements OnInit {
   };
 
   this.createService.createClient(payload).subscribe({
-    next: () => {
-      this.successMessage = `Client account created for ${clientName}.`;
+    next: (res:any)=>{
+
+ if(res.success){
+
+    this.successMessage = res.message;
+
+ }else{
+
+    this.errorMessage = res.message;
+ }
       this.submitting = false;
 
       this.clientForm.reset({
@@ -204,6 +227,57 @@ export class CreateUserComponent implements OnInit {
     this.successMessage = '';
     this.errorMessage = '';
   }
+
+ showResetModal = true;
+
+resetPasswordForm: FormGroup = this.fb.group({
+  userId: ['', Validators.required],
+  newPassword: ['', [Validators.required, Validators.minLength(6)]]
+});
+
+selectedUserId = '';
+
+newPassword = '';
+
+openResetPassword(userId: string): void {
+
+  this.resetPasswordForm.patchValue({
+    userId: userId,
+    newPassword: ''
+  });
+
+  this.showResetModal = true;
+}
+
+closeResetModal(): void {
+  this.showResetModal = false;
+}
+
+savePassword(): void {
+
+  if (this.resetPasswordForm.invalid) {
+    this.resetPasswordForm.markAllAsTouched();
+    return;
+  }
+
+  this.createService
+    .resetPassword(this.resetPasswordForm.value)
+    .subscribe({
+      next: (res: any) => {
+
+        this.successMessage = res.message;
+
+        this.showResetModal = false;
+
+        this.resetPasswordForm.reset();
+      },
+      error: (err) => {
+
+        this.errorMessage =
+          err?.error || 'Failed to reset password';
+      }
+    });
+}
 
   // =====================================================
   // 3D tilt + mouse-follow sheen (form card)

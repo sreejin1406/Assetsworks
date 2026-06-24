@@ -48,6 +48,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   clients: string[] = [];
   models: string[] = [];
   statusOptions: string[] = [];
+  role = '';
+clientName = '';
+isClientUser = false;
 
   // ---------- filters ----------
   selectedClient = '';
@@ -83,6 +86,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+
+     this.role = (localStorage.getItem('role') || '').toLowerCase();
+
+  this.clientName = localStorage.getItem('clientName') || '';
+
+  this.isClientUser = this.role === 'client';
+
     this.userName = this.resolveUserName();
     this.userInitial = this.userName.charAt(0).toUpperCase();
 
@@ -140,6 +150,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }).subscribe({
         next: (res: any) => {
           this.clients = this.normalizeList(res.clients);
+
+if (this.isClientUser) {
+
+   this.selectedClient = this.clientName;
+
+   this.clients = [this.clientName];
+}
           this.models = this.normalizeList(res.models);
           this.statusOptions = this.normalizeList(res.status);
         },
@@ -265,18 +282,18 @@ saveAssetChanges(): void {
   this.filteredAssets = this.assets.filter(asset => {
 
     // CLIENT FILTER
-    if (this.selectedClient) {
-      const client =
-        (asset.clientsDetails || '').trim().toLowerCase();
+    if (this.isClientUser) {
 
-      const selectedClient =
-        this.selectedClient.trim().toLowerCase();
+  const client =
+    (asset.clientsDetails || '').trim().toLowerCase();
 
-      if (client !== selectedClient) {
-        return false;
-      }
-    }
+  const loggedClient =
+    (this.clientName || '').trim().toLowerCase();
 
+  if (client !== loggedClient) {
+    return false;
+  }
+}
     // MODEL FILTER
     if (this.selectedModel) {
       const model =
@@ -335,15 +352,21 @@ saveAssetChanges(): void {
   this.currentPage = 1;
 }
 
-  clearFilters(): void {
-    this.selectedClient = '';
-    this.selectedModel = '';
-    this.selectedStatus = '';
-    this.searchTerm = '';
-    this.fromDate = '';
-    this.toDate = '';
-    this.applyFilters();
-  }
+ clearFilters(): void {
+
+  this.selectedClient =
+    this.isClientUser
+      ? this.clientName
+      : '';
+
+  this.selectedModel = '';
+  this.selectedStatus = '';
+  this.searchTerm = '';
+  this.fromDate = '';
+  this.toDate = '';
+
+  this.applyFilters();
+}
 
  private recomputeStatusCounts(): void {
 
@@ -455,10 +478,12 @@ saveAssetChanges(): void {
     }
   }
 
-  logout(): void {
-    localStorage.removeItem('token');
-    this.router.navigate(['/login']);
-  }
+ logout(): void {
+
+  localStorage.clear();
+
+  this.router.navigate(['/login']);
+}
 
   private resolveUserName(): string {
     try {

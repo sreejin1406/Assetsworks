@@ -135,7 +135,13 @@ localStorage.setItem(
   role || ''
 );
 
-
+localStorage.setItem(
+  'clientName',
+  res.clientName ||
+  tokenPayload.ClientName ||
+  tokenPayload.clientName ||
+  ''
+);
 
 localStorage.setItem(
   'location',
@@ -143,6 +149,9 @@ localStorage.setItem(
   tokenPayload.location ||
   ''
 );
+
+
+
       // ✅ Navigation
 
       if (

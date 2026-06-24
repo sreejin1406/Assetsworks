@@ -14,7 +14,8 @@
 
       <!-- CLIENT PORTAL - For regular users (clients) -->
       <button 
-        *ngIf="role === 'software developer'"
+        *ngIf=" role === 'client' || role === 'software developer'"
+
         routerLink="/client-portal" 
         routerLinkActive="active"
         data-tooltip="View and manage your tickets">

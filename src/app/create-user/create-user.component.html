@@ -94,13 +94,23 @@
 
           <button type="button" class="btn-link" (click)="generateUserPassword()">Generate a temporary password</button>
 
-          <div class="form-actions">
-            <span class="form-msg success" *ngIf="successMessage">{{ successMessage }}</span>
-            <span class="form-msg error" *ngIf="errorMessage">{{ errorMessage }}</span>
-            <button type="submit" class="btn-create" [disabled]="submitting">
-              {{ submitting ? 'Creating…' : 'Create User' }}
-            </button>
-          </div>
+         <div class="form-actions">
+
+  <button
+    type="button"
+    class="btn-reset"
+    (click)="openResetPassword(userForm.get('username')?.value)">
+    Reset Password
+  </button>
+
+  <button
+    type="submit"
+    class="btn-create"
+    [disabled]="submitting">
+    {{ submitting ? 'Creating…' : 'Create User' }}
+  </button>
+
+</div>
         </form>
 
         <!-- NEW CLIENT -->
@@ -148,15 +158,33 @@
           </div>
           <span class="field-error" *ngIf="clientForm.errors?.['passwordMismatch'] && clientForm.get('confirmPassword')?.touched">Passwords do not match</span>
 
-          <button type="button" class="btn-link" (click)="generateClientPassword()">Generate a temporary password</button>
 
-          <div class="form-actions">
-            <span class="form-msg success" *ngIf="successMessage">{{ successMessage }}</span>
-            <span class="form-msg error" *ngIf="errorMessage">{{ errorMessage }}</span>
-            <button type="submit" class="btn-create" [disabled]="submitting">
-              {{ submitting ? 'Creating…' : 'Create Client' }}
-            </button>
-          </div>
+          
+          <!-- <button type="button" class="btn-link" (click)="generateClientPassword()">Generate a temporary password</button> -->
+
+        <div class="form-actions">
+
+ <div class="form-actions">
+
+  <button
+    type="button"
+    class="btn-reset"
+    (click)="openResetPassword(clientForm.get('clientName')?.value)">
+    Reset Password
+  </button>
+
+  <button
+    type="submit"
+    class="btn-create"
+    [disabled]="submitting">
+    {{ submitting ? 'Creating…' : 'Create Client' }}
+  </button>
+
+</div>
+
+</div>
+
+          
         </form>
 
       </div>

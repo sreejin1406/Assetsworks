@@ -19,10 +19,23 @@
     <section class="filter-bar glass tilt-card" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
       <div class="filter-group">
         <label>Client</label>
-        <select [(ngModel)]="selectedClient" (ngModelChange)="applyFilters()">
-          <option value="">All Clients</option>
-          <option *ngFor="let c of clients" [value]="c">{{ c }}</option>
-        </select>
+        <div *ngIf="!isClientUser">
+  <select
+    [(ngModel)]="selectedClient"
+    (change)="applyFilters()">
+
+    <option value="">All Clients</option>
+
+    <option
+      *ngFor="let client of clients"
+      [value]="client">
+
+      {{client}}
+
+    </option>
+
+  </select>
+</div>
       </div>
 
       <div class="filter-group">
@@ -149,7 +162,9 @@
           <th>Asset ID</th>
           <th>Model</th>
           <th>Serial Number</th>
-          <th>Client Details</th>
+          <th *ngIf="!isClientUser">
+ Client Details
+</th>
           <th>Status</th>
           <th>Date</th>
           <th>Specification</th>
@@ -180,7 +195,9 @@
             </span>
           </td>
 
-          <td>{{ asset.clientsDetails }}</td>
+          <td *ngIf="!isClientUser">
+ {{asset.clientsDetails}}
+</td>
 
           <td>
             <span
@@ -207,21 +224,22 @@
           <td>{{ asset.location }}</td>
 
           <!-- ACTIONS -->
-          <td class="action-cell">
+         <td class="action-cell"
+    *ngIf="role === 'admin' || role === 'software developer'">
 
-            <button
-              class="btn-edit"
-              (click)="editAsset(asset)">
-              ✏ Edit
-            </button>
+  <button
+    class="btn-edit"
+    (click)="editAsset(asset)">
+    ✏ Edit
+  </button>
 
-            <button
-              class="btn-delete"
-              (click)="deleteAsset(asset.serialNumber)">
-              🗑 Delete
-            </button>
+  <button
+    class="btn-delete"
+    (click)="deleteAsset(asset.serialNumber)">
+    🗑 Delete
+  </button>
 
-          </td>
+</td>
 
         </tr>
 
