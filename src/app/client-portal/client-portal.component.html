@@ -87,7 +87,26 @@
                       [class.active]="repairForm.value.priority === p"
                       (click)="setPriority(p)">{{ p }}</button>
             </div>
+
+            <div class="field">
+  <label>Attachment</label>
+
+  <label class="dropzone" [class.has-file]="selectedFile">
+
+    <input
+      type="file"
+      (change)="onFileSelected($event)"
+      hidden>
+
+    <span>
+      {{ selectedFile ? selectedFile.name : 'Choose File' }}
+    </span>
+
+  </label>
+</div>
           </div>
+
+
 
           <div class="form-actions">
             <span class="form-msg success" *ngIf="successMessage">{{ successMessage }}</span>
@@ -193,12 +212,17 @@
         <span class="stat-value">{{ statOpen }}</span>
       </div>
       <div class="stat-card physical-card accent-amber" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
-        <span class="stat-label">In Progress</span>
+        <span class="stat-label">InProgress</span>
         <span class="stat-value">{{ statInProgress }}</span>
       </div>
       <div class="stat-card physical-card accent-muted" (mousemove)="onTiltMove($event)" (mouseleave)="onTiltLeave($event)">
-        <span class="stat-label">Resolved</span>
-        <span class="stat-value">{{ statResolved }}</span>
+       <span class="stat-label">
+Closed
+</span>
+
+<span class="stat-value">
+{{ statClosed }}
+</span>
       </div>
     </section>
 
@@ -252,10 +276,21 @@
       <div class="field">
         <label>Status</label>
         <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
-          <option value="">All Status</option>
-          <option value="Open">Open</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Resolved">Resolved</option>
+         <option value="">All Status</option>
+
+<option value="Open">Open</option>
+
+<option value="InProgress">
+In Progress
+</option>
+
+<option value="Closed">
+Closed
+</option>
+
+<option value="Escalated">
+Escalated
+</option>
         </select>
       </div>
       <div class="field">
@@ -284,7 +319,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let t of pagedTickets; trackBy: trackByTicketId">
-              <td><span class="mono accent-left">{{ t.id }}</span></td>
+              <td><span class="mono accent-left">{{ t.code }}</span></td>
               <td>{{ t.device }}</td>
               <td class="truncate" [title]="t.issue">{{ t.issue }}</td>
               <td><span class="badge" [ngClass]="priorityClass(t.priority)">{{ t.priority }}</span></td>
@@ -323,7 +358,7 @@
   <aside class="drawer" [class.open]="isDrawerOpen" *ngIf="selectedTicket as t">
     <div class="drawer-header">
       <div>
-        <span class="mono drawer-id">{{ t.id }}</span>
+        <span class="mono drawer-id">{{ t.code }}</span>
         <span class="badge" [ngClass]="statusClass(t.status)">{{ t.status }}</span>
       </div>
       <button class="btn-close" (click)="closeDrawer()">✕</button>

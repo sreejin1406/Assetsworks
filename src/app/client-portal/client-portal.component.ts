@@ -2,10 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TicketService } from '../ticket-service.service';
 import { Subscription, forkJoin } from 'rxjs';
+import { SignalRService } from '../signalr.service';
 
 export type TicketTab = 'repair' | 'new' | 'parts';
 export type Priority = 'Low' | 'Medium' | 'High';
-export type TicketStatus = 'Open' | 'In Progress' | 'Resolved' | string;
+export type TicketStatus = 'Open' | 'InProgress' | 'Resolved' | string;
 
 export interface CurrentUser {
   userId: string;
@@ -18,6 +19,7 @@ export interface CurrentUser {
 
 export interface Ticket {
   id: string;
+  code: string;
   type: string;
   device: string;
   issue: string;
@@ -113,14 +115,48 @@ selectedTicketComments: any[] = [];
 
   constructor(
     private fb: FormBuilder,
-    private ticketService: TicketService
+    private ticketService: TicketService,
+    private signalRService: SignalRService
   ) { }
 
   ngOnInit(): void {
-    this.loadCurrentUser();
-    this.loadTickets();
-  }
 
+  this.loadCurrentUser();
+
+  this.signalRService.startConnection();
+
+  this.loadTickets();
+
+  // Admin created ticket
+  this.signalRService.ticketCreated.subscribe(() => {
+    this.loadTickets();
+  });
+
+  // Admin updated status
+  this.signalRService.statusUpdated.subscribe(() => {
+    this.loadTickets();
+  });
+
+  // Admin assigned ticket
+  this.signalRService.ticketAssigned.subscribe(() => {
+    this.loadTickets();
+  });
+
+  // Live comments
+  this.signalRService.commentAdded.subscribe((comment: any) => {
+
+    if (
+      this.selectedTicket &&
+      Number(comment.ticketId) === Number(this.selectedTicket.id)
+    ) {
+
+      this.loadComments(Number(this.selectedTicket.id));
+
+    }
+
+  });
+
+}
   ngOnDestroy(): void {
     this.subs.unsubscribe();
   }
@@ -220,17 +256,84 @@ selectedTicketComments: any[] = [];
   // .NET responses can come back camelCase or PascalCase — covers both.
   private mapTicket(raw: any): Ticket {
     const created = raw.createdDate ?? raw.CreatedDate ?? raw.createdAt ?? raw.CreatedAt ?? null;
-    return {
-      id: (raw.ticketCode ?? raw.TicketCode ?? raw.id ?? raw.Id ?? raw.ticketId ?? raw.TicketId ?? '').toString(),
-      type: raw.type ?? raw.Type ?? raw.category ?? raw.Category ?? 'Repair',
-      device: raw.device ?? raw.Device ?? raw.assetId ?? raw.AssetId ?? raw.model ?? raw.Model ?? '—',
-      issue: raw.issueTitle ?? raw.IssueTitle ?? raw.title ?? raw.Title ?? raw.issue ?? raw.Issue ?? '',
-      description: raw.description ?? raw.Description ?? '',
-      priority: raw.priority ?? raw.Priority ?? 'Medium',
-      status: raw.status ?? raw.Status ?? 'Open',
-      assignedTo: raw.assignedTo ?? raw.AssignedTo ?? raw.assignedToName ?? raw.AssignedToName ?? 'Unassigned',
-      createdDate: created ? new Date(created) : null
-    };
+ return {
+
+  // Ticket Primary Key
+  id: (
+    raw.ticketId ??
+    raw.TicketId ??
+    raw.id ??
+    raw.Id ??
+    ''
+  ).toString(),
+
+  // Ticket Number (Display)
+  code: (
+    raw.ticketNumber ??
+    raw.TicketNumber ??
+    raw.ticketCode ??
+    raw.TicketCode ??
+    ''
+  ).toString(),
+
+  // Ticket Type
+  type:
+    raw.type ??
+    raw.Type ??
+    raw.category ??
+    raw.Category ??
+    'Repair',
+
+  // Device / Asset
+  device:
+    raw.model ??
+    raw.Model ??
+    raw.assetId ??
+    raw.AssetId ??
+    raw.device ??
+    raw.Device ??
+    '—',
+
+  // Issue
+  issue:
+    raw.issueType ??
+    raw.IssueType ??
+    raw.issueTitle ??
+    raw.IssueTitle ??
+    '',
+
+  // Description
+  description:
+    raw.issueDescription ??
+    raw.IssueDescription ??
+    raw.description ??
+    raw.Description ??
+    '',
+
+  // Priority
+  priority:
+    raw.priority ??
+    raw.Priority ??
+    'Medium',
+
+  // Status
+  status:
+    raw.status ??
+    raw.Status ??
+    'Open',
+
+  // Assigned Engineer
+  assignedTo:
+    raw.assignedToName ??
+    raw.AssignedToName ??
+    raw.assignedTo ??
+    raw.AssignedTo ??
+    'Unassigned',
+
+  // Created Date
+  createdDate:
+    created ? new Date(created) : null
+};
   }
 
   // =====================================================
@@ -421,7 +524,7 @@ onCreateTicket(): void {
     this.filteredTickets = this.tickets.filter((t: Ticket) => {
       if (this.statusFilter && t.status !== this.statusFilter) { return false; }
       if (this.priorityFilter && t.priority !== this.priorityFilter) { return false; }
-      if (term && !t.id.toLowerCase().includes(term)) { return false; }
+      if (term && !t.code.toLowerCase().includes(term)) { return false; }
       return true;
     });
     this.currentPage = 1;
@@ -452,14 +555,24 @@ onCreateTicket(): void {
     return ticket.id;
   }
 
-  statusClass(status: TicketStatus): string {
-    switch ((status || '').toLowerCase()) {
-      case 'open': return 'badge-open';
-      case 'in progress': return 'badge-progress';
-      case 'resolved': return 'badge-resolved';
-      default: return 'badge-default';
-    }
+ statusClass(status: TicketStatus): string {
+  switch ((status || '').toLowerCase()) {
+    case 'open':
+      return 'badge-open';
+
+    case 'inprogress':
+      return 'badge-progress';
+
+    case 'closed':
+      return 'badge-closed';
+
+    case 'escalated':
+      return 'badge-escalated';
+
+    default:
+      return 'badge-default';
   }
+}
 
   priorityClass(priority: string): string {
     switch ((priority || '').toLowerCase()) {
@@ -476,8 +589,10 @@ onCreateTicket(): void {
 
   get statTotal(): number { return this.tickets.length; }
   get statOpen(): number { return this.countByStatus('Open'); }
-  get statInProgress(): number { return this.countByStatus('In Progress'); }
-  get statResolved(): number { return this.countByStatus('Resolved'); }
+  get statInProgress(): number { return this.countByStatus('InProgress'); }
+  get statClosed(): number {
+    return this.countByStatus('Closed');
+}
 
   private countByStatus(status: string): number {
     return this.tickets.filter((t: Ticket) => (t.status || '').toLowerCase() === status.toLowerCase()).length;
@@ -492,8 +607,8 @@ onCreateTicket(): void {
     const circumference = 2 * Math.PI * 42; // r = 42
     const groups: { label: string; count: number; color: string }[] = [
       { label: 'Open', count: this.statOpen, color: '#5EEAD4' },
-      { label: 'In Progress', count: this.statInProgress, color: '#FBBF24' },
-      { label: 'Resolved', count: this.statResolved, color: '#7C8699' }
+      { label: 'InProgress', count: this.statInProgress, color: '#FBBF24' },
+      { label: 'Closed', count: this.statClosed, color: '#7C8699' }
     ];
 
     let offset = 0;
@@ -579,12 +694,20 @@ loadComments(ticketId: number) {
       this.ticketService.addComment({
         ticketId: this.selectedTicket.id,
         comment: this.commentText.trim(),
-commentedBy: this.currentUser.username
+
       }).subscribe({
-        next: () => {
-          this.commentText = '';
-          this.postingComment = false;
-        },
+       next: () => {
+
+    this.commentText='';
+
+    this.postingComment=false;
+
+    this.loadComments(
+        Number(this.selectedTicket?.id)
+    );
+      this.postingComment = false;
+
+},
         error: (err: any) => {
           console.error('Failed to post comment', err);
           this.postingComment = false;

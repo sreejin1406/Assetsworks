@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
+ 
 @property --angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-
+ 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+ 
 :root {
   --bg-base: #060a12;
   --glass-bg: rgba(16,22,36,0.5);
@@ -19,11 +19,11 @@
   --font-display: 'Orbitron', sans-serif;
   --font-body: 'Rajdhani', 'Segoe UI', sans-serif;
 }
-
+ 
 /* =========================================================
    Body / Page Shell
    ========================================================= */
-
+ 
 body {
   font-family: var(--font-body);
   color: var(--text-primary);
@@ -34,11 +34,11 @@ body {
   justify-content: center;
   overflow: hidden;
 }
-
+ 
 /* =========================================================
    Aurora Background
    ========================================================= */
-
+ 
 .bg-aurora {
   position: fixed;
   inset: 0;
@@ -46,7 +46,7 @@ body {
   overflow: hidden;
   background: var(--bg-base);
 }
-
+ 
 .orb {
   position: absolute;
   border-radius: 50%;
@@ -54,16 +54,16 @@ body {
   opacity: 0.28;
   animation: drift 24s ease-in-out infinite;
 }
-
+ 
 .orb-cyan    { width: 40vw; height: 40vw; top: -12%; left: -8%; background: var(--cyan); }
 .orb-violet  { width: 36vw; height: 36vw; bottom: -16%; right: -6%; background: var(--violet); animation-duration: 30s; animation-delay: -6s; }
 .orb-emerald { width: 26vw; height: 26vw; top: 35%; right: 30%; background: var(--emerald); animation-duration: 19s; animation-delay: -3s; }
-
+ 
 @keyframes drift {
   0%, 100% { transform: translate(0, 0) scale(1); }
   50%       { transform: translate(4%, 5%) scale(1.06); }
 }
-
+ 
 .grid-overlay {
   position: absolute;
   inset: -50%;
@@ -75,31 +75,83 @@ body {
   opacity: 0.3;
   animation: gridPan 36s linear infinite;
 }
-
+ 
 @keyframes gridPan {
   from { background-position: 0 0; }
   to   { background-position: 480px 480px; }
 }
-
-.scan-line {
-  position: absolute;
-  left: 0; right: 0; top: -2%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-  box-shadow: 0 0 16px var(--cyan);
-  opacity: 0.45;
-  animation: scanMove 8s linear infinite;
-}
-
+ 
 @keyframes scanMove {
   0%   { top: -2%; }
   100% { top: 102%; }
 }
-
+ 
+/* =========================================================
+   3D Cube — fixed layout (no forced 420px height)
+   ========================================================= */
+ 
+.scene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;            /* FIX: was 420px — caused overflow in brand panel */
+  perspective: 800px;
+  margin-bottom: 10px;
+}
+ 
+.cube-wrap {
+  width: 130px;
+  height: 130px;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: spinCube 8s linear infinite;
+}
+ 
+@keyframes spinCube {
+  from { transform: rotateX(-60deg) rotateY(0deg); }
+  to   { transform: rotateX(-60deg) rotateY(360deg); }
+}
+ 
+.face {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #0d2b08;
+  border: 2.5px solid #1b7306;
+  box-shadow: 0 0 14px rgba(27,115,6,0.5), inset 0 0 12px rgba(27,115,6,0.15);
+}
+ 
+.front  { transform: translateZ(65px); }
+.back   { transform: rotateY(180deg) translateZ(65px); }
+.left   { transform: rotateY(-90deg) translateZ(65px); }
+.right  { transform: rotateY(90deg)  translateZ(65px); }
+.top    { transform: rotateX(90deg)  translateZ(65px); }
+.bottom { transform: rotateX(-90deg) translateZ(65px); }
+ 
+.face svg { width: 100%; height: 100%; display: block; }
+ 
+/* FIX: logo-area sits below cube, not inside .brand-mark */
+.logo-area {
+  text-align: center;
+  margin-top: 6px;
+  margin-bottom: 14px;
+}
+ 
+.logo-sub {
+  font-size: 11px;
+  color: #4ecb1f;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+  font-family: var(--font-body);
+}
+ 
 /* =========================================================
    Login Page + Shell
    ========================================================= */
-
  
 .login-page {
   position: fixed;
@@ -114,7 +166,6 @@ body {
 .login-shell {
   display: flex;
   width: 100%;
-
   max-width: 980px;
   min-height: 580px;
   border-radius: 26px;
@@ -128,17 +179,16 @@ body {
   0%   { opacity: 0; transform: perspective(1400px) rotateY(-14deg) rotateX(4deg) translateY(24px) scale(0.95); }
   100% { opacity: 1; transform: perspective(1400px) rotateY(0) rotateX(0) translateY(0) scale(1); }
 }
-
+ 
 /* =========================================================
-   Brand panel (left) — atmospheric, more transparent so the
-   ambient background bleeds through; decorative only.
+   Brand Panel (left)
    ========================================================= */
  
 .brand-panel {
   position: relative;
   isolation: isolate;
   flex: 1.1;
-  padding: 48px 44px;
+  padding: 40px 36px;                /* FIX: reduced from 48px 44px to fit cube */
   border-right: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
@@ -147,203 +197,191 @@ body {
   text-align: center;
   overflow: hidden;
 }
-
-.brand-center{
-  position:relative;
-  z-index:5;
-  max-width:600px;
-}
-
-.qd-logo{
-  width:240px;
-  margin-bottom:20px;
-  filter:
-    drop-shadow(0 0 20px rgba(255,215,0,.25));
-}
-
-.brand-heading{
-  color:#fff;
-  font-size:58px;
-  font-weight:300;
-  margin-bottom:20px;
-  letter-spacing:.5px;
-}
-
-.brand-sub{
-  color:#cbd5e1;
-  font-size:20px;
-  line-height:1.7;
-  max-width:550px;
-  margin:auto;
-}
-
-.brand-divider{
-  width:140px;
-  height:3px;
-  margin:30px auto;
-
-  background:#00e5ff;
-
-  box-shadow:
-  0 0 15px #00e5ff,
-  0 0 30px #00e5ff;
-}
-
-.brand-features{
-  list-style:none;
-  padding:0;
-  margin-top:50px;
-}
-
-.brand-features li{
-  display:flex;
-  align-items:center;
-  gap:18px;
-
-  margin-bottom:28px;
-
-  font-size:28px;
-  color:#fff;
-}
-
-.brand-features i{
-  color:#00e5ff;
-  font-size:30px;
-}
-
-.brand-center{
-  position:relative;
-  z-index:2;
-}
-
-.qd-logo{
-  width:260px;
-  margin-bottom:15px;
-  filter:drop-shadow(0 0 25px rgba(255,215,0,.35));
-}
-
-.brand-heading{
-  font-size:58px;
-  font-weight:300;
-  color:#fff;
-  margin-bottom:15px;
-  font-family:'Segoe UI',sans-serif;
-}
-
-.brand-sub{
-  color:#c8d2e1;
-  font-size:18px;
-  line-height:1.8;
-  max-width:500px;
-  margin:auto;
-}
-
-.brand-divider{
-  width:140px;
-  height:3px;
-  margin:25px auto;
-  background:#00e5ff;
-  box-shadow:0 0 20px #00e5ff;
-}
-
-.brand-features{
-  list-style:none;
-  padding:0;
-  margin-top:40px;
-}
-
-.brand-features li{
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  gap:15px;
-  color:#fff;
-  font-size:24px;
-  margin-bottom:25px;
-}
-
-.brand-features i{
-  color:#00e5ff;
-  font-size:28px;
+ 
+/* FIX: brand-center is the main vertical stack — cube → logo → sub → features */
+.brand-center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 340px;
 }
  
-/* Background image — sits at the bottom of the stack. Currently OFF
-   (no background-image set) until you have a real hero/texture image
-   for this — don't point this at QDlogo.png or any other logo file.
-   A small logo scaled with `cover` across a huge panel is exactly
-   what produces giant, blurry, oversized lettering — logos and
-   full-panel background images are different kinds of assets.
-   When you have a real background image, drop it at
-   src/assets/img/brand-bg.jpg and uncomment the line below — keep
-   it an ABSOLUTE /assets/... path, not a relative one (see the
-   build-error note from earlier). */
-.brand-panel::before{
-  content:'';
-  position:absolute;
-
-  width:140px;
-  height:140px;
-
-  top:60px;
-  left:60px;
-
-  border:1px solid rgba(0,255,255,.15);
-
-  clip-path:polygon(
-  25% 6%,75% 6%,
-  100% 50%,75% 94%,
-  25% 94%,0 50%);
-}
-
-.brand-panel::after{
-  content:'';
-  position:absolute;
-
-  width:120px;
-  height:120px;
-
-  right:120px;
-  top:250px;
-
-  border:1px solid rgba(0,255,255,.35);
-
-  clip-path:polygon(
-  25% 6%,75% 6%,
-  100% 50%,75% 94%,
-  25% 94%,0 50%);
+/* FIX: qd-logo image — small so it fits alongside the cube above it */
+.qd-logo {
+  width: min(140px, 50%);
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 20px rgba(255,215,0,0.25));
+  animation: heroLogoIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s both;
 }
  
-/* Color wash — the same cyan/violet gradient as before, now blended
-   directly onto the image (via mix-blend-mode) instead of sitting on
-   a flat color. `isolation: isolate` above stops this blend from
-   leaking onto anything outside the panel. */
-
+@keyframes heroLogoIn {
+  0%   { opacity: 0; transform: scale(0.85) translateY(14px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
  
-.floating-shapes { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.brand-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(16px, 2vw, 22px);
+  line-height: 1.25;
+  color: #fff;
+  margin: 0 0 10px;
+  animation: fadeUp 0.6s ease 0.25s both;
+}
  
-/* thin hexagon outlines — true outlines via SVG polygon, not clip-path
-   (a clipped bordered div can't produce a clean hexagon stroke) */
+.brand-sub {
+  font-size: clamp(12px, 1.2vw, 14px);
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 300px;
+  margin: 0 auto;
+  animation: fadeUp 0.6s ease 0.32s both;
+}
+ 
+.brand-divider {
+  display: block;
+  width: 100px;
+  height: 2px;
+  margin: 16px auto;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  box-shadow: 0 0 10px var(--cyan-soft);
+  animation: fadeUp 0.6s ease 0.38s both;
+}
+ 
+.brand-features {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  margin: 12px auto 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  max-width: 260px;
+}
+ 
+.brand-features li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: clamp(12px, 1.1vw, 13.5px);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  animation: fadeUp 0.6s ease both;
+}
+ 
+.brand-features li:nth-child(1) { animation-delay: 0.46s; }
+.brand-features li:nth-child(2) { animation-delay: 0.54s; }
+.brand-features li:nth-child(3) { animation-delay: 0.62s; }
+ 
+.brand-features i {
+  font-size: 15px;
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+ 
+/* =========================================================
+   Brand Mark — top-left badge ONLY (hexagon icon + "QDIS")
+   FIX: cube was incorrectly placed inside here before
+   ========================================================= */
+ 
+.brand-mark {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--cyan);
+  animation: fadeUp 0.6s ease 0.1s both;
+}
+ 
+.brand-mark svg {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 0 8px var(--cyan-soft));
+}
+ 
+.brand-mark span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
+}
+ 
+/* Decorative pseudo hexagons */
+.brand-panel::before {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  top: 60px;
+  left: 60px;
+  border: 1px solid rgba(0,255,255,0.12);
+  clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%);
+  pointer-events: none;
+}
+ 
+.brand-panel::after {
+  content: '';
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  right: 80px;
+  bottom: 80px;
+  border: 1px solid rgba(0,255,255,0.2);
+  clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%);
+  pointer-events: none;
+}
+ 
+/* =========================================================
+   Floating Shapes & Particles
+   ========================================================= */
+ 
+.floating-shapes {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+ 
 .hex-outline { position: absolute; fill: none; stroke-width: 1.5; }
-.hex-1 { width: 150px; top: 5%; left: 5%; stroke: rgba(94, 234, 212, 0.22); animation: floatA 13s ease-in-out infinite; }
-.hex-2 { width: 64px; top: 22%; left: 72%; stroke: rgba(94, 234, 212, 0.16); animation: floatD 11s ease-in-out infinite; }
-.hex-3 { width: 46px; top: 58%; left: 7%; stroke: rgba(94, 234, 212, 0.14); animation: floatB 16s ease-in-out infinite; }
+.hex-1 { width: 130px; top: 5%;  left: 5%;  stroke: rgba(94,234,212,0.22); animation: floatA 13s ease-in-out infinite; }
+.hex-2 { width: 56px;  top: 22%; left: 72%; stroke: rgba(94,234,212,0.16); animation: floatD 11s ease-in-out infinite; }
+.hex-3 { width: 40px;  top: 58%; left: 7%;  stroke: rgba(94,234,212,0.14); animation: floatB 16s ease-in-out infinite; }
  
-.shape { position: absolute; border: 1px solid rgba(255, 255, 255, 0.1); }
+.shape { position: absolute; border: 1px solid rgba(255,255,255,0.1); }
 .shape-ring {
-  width: 170px; height: 170px; border-radius: 50%; border: 1.5px solid rgba(94, 234, 212, 0.2);
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(94,234,212,0.2);
   top: 52%; left: 58%;
   animation: floatC 17s ease-in-out infinite;
 }
-@keyframes floatA { 0%, 100% { transform: translate(0, 0) rotate(0deg); }   50% { transform: translate(14px, -18px) rotate(8deg); } }
-@keyframes floatB { 0%, 100% { transform: translate(0, 0) scale(1); }      50% { transform: translate(-12px, 14px) scale(1.06); } }
-@keyframes floatC { 0%, 100% { transform: translate(0, 0) rotate(0deg); }  50% { transform: translate(10px, 10px) rotate(-10deg); } }
-@keyframes floatD { 0%, 100% { transform: translate(0, 0) rotate(20deg); } 50% { transform: translate(-10px, -12px) rotate(35deg); } }
  
-/* twinkling particle dots */
+@keyframes floatA { 0%, 100% { transform: translate(0,0) rotate(0deg); }   50% { transform: translate(14px,-18px) rotate(8deg); } }
+@keyframes floatB { 0%, 100% { transform: translate(0,0) scale(1); }        50% { transform: translate(-12px,14px) scale(1.06); } }
+@keyframes floatC { 0%, 100% { transform: translate(0,0) rotate(0deg); }   50% { transform: translate(10px,10px) rotate(-10deg); } }
+@keyframes floatD { 0%, 100% { transform: translate(0,0) rotate(20deg); }  50% { transform: translate(-10px,-12px) rotate(35deg); } }
+ 
 .particles { position: absolute; inset: 0; }
 .particle {
-  position: absolute; width: 3px; height: 3px; border-radius: 50%;
-  background: var(--cyan); box-shadow: 0 0 6px var(--cyan);
+  position: absolute;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
   animation: twinkle 3.5s ease-in-out infinite;
 }
 .p1 { top: 9%;  left: 38%; animation-delay: 0s; }
@@ -353,93 +391,38 @@ body {
 .p5 { top: 70%; left: 30%; animation-delay: .3s; }
 .p6 { top: 36%; left: 86%; animation-delay: 2.1s; }
 .p7 { top: 80%; left: 68%; animation-delay: 1.5s; }
+ 
 @keyframes twinkle { 0%, 100% { opacity: .25; transform: scale(1); } 50% { opacity: 1; transform: scale(1.7); } }
  
-/* network-mesh accent, bottom-left */
 .mesh-wave {
-  position: absolute; left: -5%; bottom: -10px; width: 75%; height: auto; z-index: 0;
+  position: absolute; left: -5%; bottom: -10px;
+  width: 75%; height: auto; z-index: 0;
   animation: meshDrift 14s ease-in-out infinite;
 }
 @keyframes meshDrift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
  
-.brand-mark {
-  position: absolute;
-  top: 28px;
-  left: 32px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--cyan);
-  animation: fadeUp 0.6s ease 0.1s both;
-}
-.brand-mark svg { width: 26px; height: 26px; filter: drop-shadow(0 0 8px var(--cyan-soft)); }
-.brand-mark span {
-  font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: 1.5px; color: var(--text-primary);
-}
- 
+/* Brand hero (if used) */
 .brand-hero {
   position: relative; z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: flex; flex-direction: column; align-items: center;
 }
  
 .brand-hero-logo {
-  width: min(230px, 65%);
-  height: auto;
-  object-fit: contain;
-  margin-bottom: 6px;
-  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 24px rgba(34, 211, 238, 0.22));
-  animation: heroLogoIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
-}
-@keyframes heroLogoIn {
-  0%   { opacity: 0; transform: scale(0.85) translateY(14px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+  width: min(180px, 60%);
+  height: auto; object-fit: contain; margin-bottom: 6px;
+  filter: drop-shadow(0 12px 28px rgba(0,0,0,0.5)) drop-shadow(0 0 24px rgba(34,211,238,0.22));
+  animation: heroLogoIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s both;
 }
  
-.brand-heading {
-  font-family: var(--font-display); font-weight: 700; font-size: 27px; line-height: 1.25;
-  margin: 0 0 12px; max-width: 340px;
-  animation: fadeUp 0.6s ease 0.25s both;
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.brand-sub {
-  font-size: 15px; color: var(--text-muted); line-height: 1.5; max-width: 320px; margin: 0;
-  animation: fadeUp 0.6s ease 0.32s both;
-}
- 
-.brand-divider {
-  display: block;
-  width: 130px;
-  height: 2px;
-  margin: 22px 0;
-  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-  box-shadow: 0 0 10px var(--cyan-soft);
-  animation: fadeUp 0.6s ease 0.38s both;
-}
- 
-.brand-features {
-  position: relative; z-index: 1;
-  list-style: none; margin: 26px auto 0; padding: 0;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
-}
-.brand-features li {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 13.5px; font-weight: 600; color: var(--text-primary);
-  text-align: left;
-  animation: fadeUp 0.6s ease both;
-}
-.brand-features li:nth-child(1) { animation-delay: 0.46s; }
-.brand-features li:nth-child(2) { animation-delay: 0.54s; }
-.brand-features li:nth-child(3) { animation-delay: 0.62s; }
-.brand-features i { font-size: 16px; color: var(--cyan); flex-shrink: 0; }
- 
-@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
  
 /* =========================================================
    Login Panel (right)
    ========================================================= */
-
+ 
 .login-panel {
   flex: 1;
   background: var(--glass-bg-strong);
@@ -450,14 +433,13 @@ body {
   flex-direction: column;
   justify-content: center;
 }
-
-/* Header */
+ 
 .login-card-header {
   text-align: center;
   margin-bottom: 30px;
   animation: fadeUp 0.6s ease 0.15s both;
 }
-
+ 
 .login-icon {
   position: relative;
   width: 56px; height: 56px;
@@ -469,9 +451,9 @@ body {
   place-items: center;
   color: var(--cyan);
 }
-
+ 
 .login-icon i { font-size: 24px; }
-
+ 
 .icon-ring {
   position: absolute;
   inset: -6px;
@@ -483,21 +465,21 @@ body {
   mask-composite: exclude;
   animation: spinRing 4s linear infinite;
 }
-
+ 
 @keyframes spinRing { to { --angle: 360deg; } }
-
+ 
 .login-card-header h2 {
   font-family: var(--font-display);
   font-size: 22px;
   font-weight: 700;
   margin: 0 0 6px;
 }
-
+ 
 .login-card-header p {
   font-size: 14px;
   color: var(--text-muted);
 }
-
+ 
 /* ── Form ── */
 .auth-form {
   display: flex;
@@ -505,20 +487,20 @@ body {
   gap: 0;
   animation: fadeUp 0.6s ease 0.25s both;
 }
-
+ 
 .form-floating {
   position: relative;
   margin-bottom: 1.5rem;
 }
-
+ 
 .form-floating > input,
 .form-floating > input.form-control,
 .login-panel .form-control {
   width: 100%;
   height: calc(3.5rem + 2px);
   padding: 1rem 0.95rem;
-  background: rgba(255, 255, 255, 0.07) !important;
-  border: 1px solid rgba(140, 195, 255, 0.22) !important;
+  background: rgba(255,255,255,0.07) !important;
+  border: 1px solid rgba(140,195,255,0.22) !important;
   border-radius: 12px;
   color: var(--text-primary) !important;
   font-family: var(--font-body);
@@ -529,33 +511,32 @@ body {
   -webkit-text-fill-color: var(--text-primary) !important;
   box-shadow: none !important;
 }
-
-/* Fix browser autofill turning input white */
+ 
 .form-floating > input:-webkit-autofill,
 .form-floating > input:-webkit-autofill:hover,
 .form-floating > input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px rgba(16, 22, 36, 0.95) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(16,22,36,0.95) inset !important;
   -webkit-text-fill-color: var(--text-primary) !important;
   caret-color: var(--text-primary);
-  border: 1px solid rgba(140, 195, 255, 0.22) !important;
+  border: 1px solid rgba(140,195,255,0.22) !important;
   transition: background-color 5000s ease-in-out 0s;
 }
-
+ 
 .form-floating > input::placeholder { color: transparent; }
-
+ 
 .form-floating > input:focus {
   border-color: var(--cyan);
   background: rgba(34,211,238,0.07);
 }
-
+ 
 .form-floating > input.is-invalid { border-color: var(--amber); }
-
+ 
 .form-floating > input:focus,
 .form-floating > input:not(:placeholder-shown) {
   padding-top: 1.55rem;
   padding-bottom: 0.55rem;
 }
-
+ 
 .form-floating > label {
   position: absolute;
   inset: 0;
@@ -571,24 +552,21 @@ body {
   transform-origin: 0 0;
   transition: transform 0.15s ease, color 0.15s ease;
 }
-
+ 
 .form-floating > label i {
   font-size: 15px;
   color: var(--cyan);
 }
-
+ 
 .form-floating > input:focus ~ label,
 .form-floating > input:not(:placeholder-shown) ~ label {
   transform: scale(0.82) translateY(-0.65rem);
   color: var(--cyan);
 }
-
+ 
 .form-floating > input.is-invalid ~ label,
-.form-floating > input.is-invalid ~ label i {
-  color: var(--amber);
-}
-
-/* Glow ring on focus */
+.form-floating > input.is-invalid ~ label i { color: var(--amber); }
+ 
 .input-glow {
   position: absolute;
   inset: 0;
@@ -598,11 +576,10 @@ body {
   transition: opacity 0.3s ease;
   box-shadow: 0 0 0 1px var(--cyan), 0 0 22px var(--cyan-soft);
 }
-
+ 
 .form-floating > input:focus ~ .input-glow { opacity: 1; }
 .form-floating > input.is-invalid ~ .input-glow { display: none; }
-
-/* Validation */
+ 
 .invalid-feedback {
   display: none;
   align-items: center;
@@ -613,33 +590,26 @@ body {
   font-weight: 500;
   color: var(--amber);
 }
-
+ 
 .form-floating > input.is-invalid ~ .invalid-feedback { display: flex; }
 .invalid-feedback i { font-size: 13px; }
-
-/* Password field */
+ 
 .password-field { position: relative; }
-
 .password-field input { padding-right: 48px; }
-
+ 
 .password-toggle {
   position: absolute;
   top: 0; right: 0;
   height: 100%; width: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none;
   color: var(--text-muted);
-  cursor: pointer;
-  z-index: 5;
+  cursor: pointer; z-index: 5;
   transition: color 0.2s ease;
 }
-
 .password-toggle:hover { color: var(--cyan); }
 .password-toggle i { font-size: 16px; }
-
+ 
 /* ── Submit Button ── */
 .btn-login {
   position: relative;
@@ -657,36 +627,21 @@ body {
   cursor: pointer;
   box-shadow: 0 12px 30px rgba(34,211,238,0.3);
   transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.2s ease, background 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; width: 100%;
 }
-
+ 
 .btn-login:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 16px 38px rgba(34,211,238,0.4);
 }
-
-.btn-login:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
-}
-
-.btn-login:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
+.btn-login:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+.btn-login:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; }
 .btn-login.loading {
   background: linear-gradient(135deg, #1b2230, #232b3c);
-  color: var(--text-primary);
-  box-shadow: none;
+  color: var(--text-primary); box-shadow: none;
 }
-
-/* Shimmer sweep on hover */
+ 
 .btn-login::after {
   content: '';
   position: absolute;
@@ -696,10 +651,8 @@ body {
   transform: skewX(-20deg);
   transition: left 0.6s ease;
 }
-
 .btn-login:hover:not(:disabled)::after { left: 120%; }
-
-/* Spinner (for loading state) */
+ 
 .spinner {
   display: inline-block;
   width: .85rem; height: .85rem;
@@ -708,51 +661,49 @@ body {
   border-radius: 50%;
   animation: spinnerSpin 0.75s linear infinite;
 }
-
 @keyframes spinnerSpin { to { transform: rotate(360deg); } }
-
+ 
 /* ── Footer ── */
 .login-footer {
   text-align: center;
   margin-top: 22px;
   animation: fadeUp 0.6s ease 0.4s both;
 }
-
+ 
 .forgot-link {
   font-size: 13px;
   color: var(--text-muted);
   text-decoration: none;
   transition: color 0.2s ease;
 }
-
 .forgot-link:hover { color: var(--cyan); }
-
+ 
 /* =========================================================
    Responsive
    ========================================================= */
-
+ 
 @media (max-width: 880px) {
-  .brand-panel  { display: none; }
-  .login-shell  { max-width: 440px; }
-  .login-panel  { padding: 44px 30px; }
+  .brand-panel { display: none; }
+  .login-shell { max-width: 440px; }
+  .login-panel { padding: 44px 30px; }
 }
-
+ 
 @media (max-width: 420px) {
   .login-page  { padding: 12px; }
   .login-panel { padding: 36px 22px; }
 }
-
+ 
 /* =========================================================
    Accessibility
    ========================================================= */
-
+ 
 a:focus-visible,
 button:focus-visible,
 input:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
 }
-
+ 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;

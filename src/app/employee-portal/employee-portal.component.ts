@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TicketService } from '../ticket-service.service';
 import { Subscription } from 'rxjs';
+import { SignalRService } from '../signalr.service';
 
 export type TicketStatus = 'Open' | 'In Progress' | 'Closed' | string;
 export type Priority = 'Low' | 'Medium' | 'High' | string;
@@ -73,11 +74,43 @@ export class EmployeePortalComponent implements OnInit, OnDestroy {
 
   private subs = new Subscription();
 
-  constructor(private ticketService: TicketService) { }
+  constructor(
+    private ticketService: TicketService,
+    private signalRService: SignalRService
+) { }
 
   ngOnInit(): void {
+
+    this.signalRService.startConnection();
+
     this.loadTickets();
-  }
+
+    this.signalRService.ticketAssigned.subscribe(() => {
+
+        this.loadTickets();
+
+    });
+
+    this.signalRService.statusUpdated.subscribe(() => {
+
+        this.loadTickets();
+
+    });
+
+    this.signalRService.commentAdded.subscribe((comment: any) => {
+
+        if (
+            this.selectedTicket &&
+            Number(comment.ticketId) === Number(this.selectedTicket.id)
+        ) {
+
+            this.loadComments(this.selectedTicket.id);
+
+        }
+
+    });
+
+}
 
   ngOnDestroy(): void {
     this.subs.unsubscribe();
@@ -123,6 +156,21 @@ export class EmployeePortalComponent implements OnInit, OnDestroy {
       createdDate: created ? new Date(created) : null
     };
   }
+
+  loadComments(ticketId: number): void {
+
+    this.ticketService.getComments(ticketId)
+        .subscribe((comments: any[]) => {
+
+            this.comments = comments.map(c => ({
+                author: c.commentedByName,
+                text: c.comment,
+                time: new Date(c.createdDate)
+            }));
+
+        });
+
+}
 
   // =====================================================
   // Filters / pagination
@@ -326,7 +374,7 @@ export class EmployeePortalComponent implements OnInit, OnDestroy {
   openTicket(ticket: Ticket): void {
     this.selectedTicket = ticket;
     this.isDrawerOpen = true;
-    this.comments = [];
+   this.loadComments(ticket.id);
     this.commentText = '';
   }
 
@@ -349,11 +397,15 @@ export class EmployeePortalComponent implements OnInit, OnDestroy {
         comment: text,
         channel: 'employee'
       }).subscribe({
-        next: () => {
-          this.comments = [...this.comments, { author: 'You', text, time: new Date() }];
-          this.commentText = '';
-          this.postingComment = false;
-        },
+       next: () => {
+
+    this.commentText='';
+
+    this.postingComment=false;
+
+    this.loadComments(this.selectedTicket!.id);
+
+},
         error: (err: any) => {
           console.error('Failed to post comment', err);
           this.postingComment = false;

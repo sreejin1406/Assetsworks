@@ -65,12 +65,14 @@ return this.http.put(
 );  }
 
   // ✅ Assign ticket (if you create backend)
-  assignTicket(ticketId: number, userId: number): Observable<any> {
-return this.http.put(
-  `${this.baseUrl}/ticket/assign?ticketId=${ticketId}&userId=${userId}`,
-  {},
-  this.getHeaders()
-);  }
+ assignTicket(ticketId: number, userId: string): Observable<any> {
+
+  return this.http.put(
+    `${this.baseUrl}/ticket/assign?ticketId=${ticketId}&userId=${userId}`,
+    {},
+    this.getHeaders()
+  );
+}
 
 getAssignedTickets(): Observable<any> {
   return this.http.get(

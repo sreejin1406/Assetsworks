@@ -294,6 +294,20 @@ saveAssetChanges(): void {
     return false;
   }
 }
+
+// CLIENT DROPDOWN FILTER (Admin / Head)
+if (!this.isClientUser && this.selectedClient) {
+
+  const client =
+    (asset.clientsDetails || '').trim().toLowerCase();
+
+  const selectedClient =
+    this.selectedClient.trim().toLowerCase();
+
+  if (client !== selectedClient) {
+    return false;
+  }
+}
     // MODEL FILTER
     if (this.selectedModel) {
       const model =

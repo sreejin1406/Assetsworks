@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TicketService } from '../ticket-service.service';
 import { Subscription, forkJoin } from 'rxjs';
+import { SignalRService } from '../signalr.service';
 
-export type TicketStatus = 'Open' | 'In Progress' | 'Closed' | string;
+export type TicketStatus = 'Open' | 'InProgress' | 'Closed' | string;
 export type Priority = 'Low' | 'Medium' | 'High' | string;
 export type CommentChannel = 'client' | 'employee';
 
@@ -52,8 +53,12 @@ export class AdminPortalComponent implements OnInit ,OnDestroy {
   priorityFilter = '';
   searchTerm = '';
 
-  statusOptions: TicketStatus[] = ['Open', 'In Progress', 'Closed'];
-  priorityOptions: Priority[] = ['Low', 'Medium', 'High'];
+statusOptions: TicketStatus[] = [
+  'Open',
+  'InProgress',
+  'Closed',
+  'Escalated'
+];  priorityOptions: Priority[] = ['Low', 'Medium', 'High'];
 
   // ---------- pagination ----------
   currentPage = 1;
@@ -74,11 +79,47 @@ export class AdminPortalComponent implements OnInit ,OnDestroy {
 
   private subs = new Subscription();
 
-  constructor(private ticketService: TicketService) { }
+  constructor(private ticketService: TicketService, private signalRService: SignalRService) { }
 
-  ngOnInit(): void {
+ ngOnInit(): void {
+
+  this.signalRService.startConnection();
+
+  this.loadData();
+
+  this.signalRService.ticketCreated.subscribe(() => {
     this.loadData();
-  }
+  });
+
+  this.signalRService.statusUpdated.subscribe(() => {
+    this.loadData();
+  });
+
+  this.signalRService.commentAdded.subscribe(comment => {
+
+    if (
+        this.selectedTicket &&
+        Number(comment.ticketId) === Number(this.selectedTicket.id)
+    ) {
+
+        this.loadComments(Number(this.selectedTicket.id));
+
+    }
+
+});
+
+  this.signalRService.commentAdded.subscribe((comment: any) => {
+
+    if (
+      this.selectedTicket &&
+      comment.ticketId === this.selectedTicket.id
+    ) {
+      this.loadComments(this.selectedTicket.id);
+    }
+
+  });
+
+}
 
   ngOnDestroy(): void {
     this.subs.unsubscribe();
@@ -116,20 +157,93 @@ export class AdminPortalComponent implements OnInit ,OnDestroy {
     const id = Number(raw.id ?? raw.Id ?? raw.ticketId ?? raw.TicketId ?? 0);
     const created = raw.createdDate ?? raw.CreatedDate ?? raw.createdAt ?? raw.CreatedAt ?? null;
     const resolved = raw.resolvedDate ?? raw.ResolvedDate ?? raw.closedDate ?? raw.ClosedDate ?? null;
-    return {
-      id,
-      code: (raw.ticketCode ?? raw.TicketCode ?? raw.code ?? (id ? `TCK-${id}` : '—')).toString(),
-      device: raw.device ?? raw.Device ?? raw.assetId ?? raw.AssetId ?? raw.model ?? raw.Model ?? '—',
-      issue: raw.issueTitle ?? raw.IssueTitle ?? raw.title ?? raw.Title ?? raw.issue ?? raw.Issue ?? '',
-      description: raw.description ?? raw.Description ?? '',
-      priority: raw.priority ?? raw.Priority ?? 'Medium',
-      status: raw.status ?? raw.Status ?? 'Open',
-      raisedBy: raw.requestedByName ?? raw.RequestedByName ?? raw.raisedBy ?? raw.RaisedBy ?? raw.clientName ?? raw.ClientName ?? 'Unknown',
-      assignedToId: (raw.assignedToId ?? raw.AssignedToId ?? raw.assignedUserId ?? raw.AssignedUserId ?? '').toString(),
-      assignedTo: raw.assignedTo ?? raw.AssignedTo ?? raw.assignedToName ?? raw.AssignedToName ?? 'Unassigned',
-      createdDate: created ? new Date(created) : null,
-      resolvedDate: resolved ? new Date(resolved) : null
-    };
+  return {
+  // Primary Key
+  id: Number(
+    raw.ticketId ??
+    raw.TicketId ??
+    raw.id ??
+    raw.Id ??
+    0
+  ),
+
+  // Ticket Number (Display)
+  code: (
+    raw.ticketNumber ??
+    raw.TicketNumber ??
+    raw.ticketCode ??
+    raw.TicketCode ??
+    (id ? `TKT-${id}` : '—')
+  ).toString(),
+
+  // Asset
+  device:
+    raw.model ??
+    raw.Model ??
+    raw.assetId ??
+    raw.AssetId ??
+    raw.device ??
+    raw.Device ??
+    '—',
+
+  // Issue
+  issue:
+    raw.issueType ??
+    raw.IssueType ??
+    raw.issueTitle ??
+    raw.IssueTitle ??
+    '',
+
+  // Description
+  description:
+    raw.issueDescription ??
+    raw.IssueDescription ??
+    raw.description ??
+    raw.Description ??
+    '',
+
+  // Priority
+  priority:
+    raw.priority ??
+    raw.Priority ??
+    'Medium',
+
+  // Status
+  status:
+    raw.status ??
+    raw.Status ??
+    'Open',
+
+  // Raised By
+  raisedBy:
+    raw.raisedByName ??
+    raw.RaisedByName ??
+    raw.requestedByName ??
+    raw.RequestedByName ??
+    raw.raisedBy ??
+    raw.RaisedBy ??
+    'Unknown',
+
+  // Assigned User Id
+  assignedToId: (
+    raw.assignedTo ??
+    raw.AssignedTo ??
+    ''
+  ).toString(),
+
+  // Assigned User Name
+  assignedTo:
+    raw.assignedToName ??
+    raw.AssignedToName ??
+    'Unassigned',
+
+  // Dates
+  createdDate:
+    created ? new Date(created) : null,
+
+  resolvedDate:
+    resolved ? new Date(resolved) : null
+};
   }
 
   userId(user: any): string {
@@ -183,7 +297,7 @@ export class AdminPortalComponent implements OnInit ,OnDestroy {
   statusClass(status: TicketStatus): string {
     switch ((status || '').toLowerCase()) {
       case 'open': return 'badge-open';
-      case 'in progress': return 'badge-progress';
+      case 'inprogress': return 'badge-progress';
       case 'closed': return 'badge-closed';
       default: return 'badge-default';
     }
@@ -230,7 +344,10 @@ export class AdminPortalComponent implements OnInit ,OnDestroy {
     ticket.assignedTo = matched ? this.userName(matched) : 'Assigned';
 
     this.subs.add(
-      this.ticketService.assignTicket(ticket.id, Number(userIdValue)).subscribe({
+      this.ticketService.assignTicket(
+    ticket.id,
+    userIdValue
+).subscribe({
         next: () => { /* confirmed */ },
         error: (err: any) => {
           console.error('Failed to assign ticket', err);
@@ -247,7 +364,7 @@ export class AdminPortalComponent implements OnInit ,OnDestroy {
 
   get statTotal(): number { return this.tickets.length; }
   get statOpen(): number { return this.countByStatus('Open'); }
-  get statInProgress(): number { return this.countByStatus('In Progress'); }
+  get statInProgress(): number { return this.countByStatus('InProgress'); }
   get statClosed(): number { return this.countByStatus('Closed'); }
   get statHighPriority(): number {
     return this.tickets.filter((t: Ticket) => (t.priority || '').toLowerCase() === 'high').length;
@@ -278,7 +395,7 @@ export class AdminPortalComponent implements OnInit ,OnDestroy {
     const circumference = 2 * Math.PI * 42;
     const groups: { label: string; count: number; color: string }[] = [
       { label: 'Open', count: this.statOpen, color: '#5EEAD4' },
-      { label: 'In Progress', count: this.statInProgress, color: '#FBBF24' },
+      { label: 'InProgress', count: this.statInProgress, color: '#FBBF24' },
       { label: 'Closed', count: this.statClosed, color: '#7C8699' }
     ];
 
